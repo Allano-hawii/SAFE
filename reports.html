@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="View, filter, and export construction site reports and safety incidents — SafeSite reporting module.">
+  <title>Reports — SafeSite</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-brand-icon">🏗️</span>
+        <h1>SafeSite</h1>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a></li>
+        <li><a href="daily-report.html"><span class="nav-icon">📝</span> Daily Report</a></li>
+        <li><a href="safety-incident.html"><span class="nav-icon">🚨</span> Safety Incident</a></li>
+        <li><a href="reports.html" class="active"><span class="nav-icon">📋</span> View Reports</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-avatar" id="sidebar-avatar">JO</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">role</div>
+          </div>
+        </div>
+        <a href="#" id="sign-out-btn" class="btn btn-ghost btn-block" style="margin-top: 0.75rem; font-size: 0.82rem;">🚪 Sign Out</a>
+      </div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <button class="hamburger" id="hamburger-btn">☰</button>
+          <h2>📋 View Reports</h2>
+        </div>
+        <div class="top-bar-right">
+          <a href="dashboard.html" class="btn btn-ghost" style="font-size: 0.85rem;">← Back to Dashboard</a>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="panel-daily">📝 Daily Reports</button>
+          <button class="tab-btn" data-tab="panel-incidents">🚨 Safety Incidents</button>
+        </div>
+
+        <!-- ==================== DAILY REPORTS TAB ==================== -->
+        <div class="tab-panel active" id="panel-daily">
+          <div class="card">
+            <div class="card-header">
+              <h3>Daily Progress Reports</h3>
+              <button class="btn btn-secondary" id="export-daily-btn" style="font-size: 0.82rem;">
+                📥 Export CSV
+              </button>
+            </div>
+            <div class="card-body" style="padding-bottom: 0.5rem;">
+              <!-- Filters -->
+              <div class="filter-bar">
+                <input type="date" id="filter-daily-from" class="form-control" title="From date">
+                <input type="date" id="filter-daily-to" class="form-control" title="To date">
+                <select id="filter-daily-site" class="form-control">
+                  <option value="all">All Sites</option>
+                </select>
+                <button class="btn btn-primary" id="apply-daily-filters" style="font-size: 0.82rem;">Apply</button>
+                <button class="btn btn-ghost" id="clear-daily-filters" style="font-size: 0.82rem;">Clear</button>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-container">
+              <table class="data-table" id="daily-table">
+                <thead>
+                  <tr>
+                    <th data-sort="date">Date ↕</th>
+                    <th data-sort="siteName">Site ↕</th>
+                    <th data-sort="weather">Weather</th>
+                    <th data-sort="laborSkilled">Skilled</th>
+                    <th data-sort="laborUnskilled">Unskilled</th>
+                    <th data-sort="completionPct">Progress ↕</th>
+                    <th data-sort="equipmentStatus">Equipment</th>
+                    <th>Submitted By</th>
+                  </tr>
+                </thead>
+                <tbody id="daily-tbody"></tbody>
+              </table>
+            </div>
+
+            <div class="empty-state hidden" id="daily-empty">
+              <div class="empty-state-icon">📝</div>
+              <h4>No daily reports found</h4>
+              <p>No reports match your filters, or none have been submitted yet.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== INCIDENTS TAB ==================== -->
+        <div class="tab-panel" id="panel-incidents">
+          <div class="card">
+            <div class="card-header">
+              <h3>Safety Incident Reports</h3>
+              <button class="btn btn-secondary" id="export-incidents-btn" style="font-size: 0.82rem;">
+                📥 Export CSV
+              </button>
+            </div>
+            <div class="card-body" style="padding-bottom: 0.5rem;">
+              <!-- Filters -->
+              <div class="filter-bar">
+                <input type="date" id="filter-inc-from" class="form-control" title="From date">
+                <input type="date" id="filter-inc-to" class="form-control" title="To date">
+                <select id="filter-inc-site" class="form-control">
+                  <option value="all">All Sites</option>
+                </select>
+                <select id="filter-inc-urgency" class="form-control">
+                  <option value="all">All Urgency</option>
+                  <option value="Low">🟢 Low</option>
+                  <option value="Medium">🟡 Medium</option>
+                  <option value="High">🔴 High</option>
+                </select>
+                <select id="filter-inc-status" class="form-control">
+                  <option value="all">All Status</option>
+                  <option value="Open">Open</option>
+                  <option value="Under Review">Under Review</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+                <button class="btn btn-primary" id="apply-inc-filters" style="font-size: 0.82rem;">Apply</button>
+                <button class="btn btn-ghost" id="clear-inc-filters" style="font-size: 0.82rem;">Clear</button>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-container">
+              <table class="data-table" id="incidents-table">
+                <thead>
+                  <tr>
+                    <th data-sort="dateTime">Date ↕</th>
+                    <th data-sort="siteName">Site ↕</th>
+                    <th data-sort="incidentType">Type ↕</th>
+                    <th>Location</th>
+                    <th data-sort="urgency">Urgency ↕</th>
+                    <th data-sort="status">Status ↕</th>
+                    <th>Reported By</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="incidents-tbody"></tbody>
+              </table>
+            </div>
+
+            <div class="empty-state hidden" id="incidents-empty">
+              <div class="empty-state-icon">🚨</div>
+              <h4>No incidents found</h4>
+              <p>No incidents match your filters, or none have been reported yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal" style="display:none; position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center;">
+    <div class="card" style="max-width:650px; width:90%; max-height:80vh; overflow-y:auto; margin:auto; position:relative; top:50%; transform:translateY(-50%);">
+      <div class="card-header">
+        <h3 id="modal-title">Report Details</h3>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal()">✕</button>
+      </div>
+      <div class="card-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/reports.js"></script>
+</body>
+</html>

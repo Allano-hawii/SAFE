@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SafeSite — Cloud-based construction site log and reporting system. Digitize daily reports, safety incidents, and site management in real time.">
+  <title>SafeSite — Construction Log & Reporting</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+</head>
+<body>
+
+  <div class="login-container">
+    <!-- LEFT: Hero / Branding -->
+    <div class="login-hero">
+      <div class="login-hero-content">
+        <span class="login-logo-icon">🏗️</span>
+        <h1 class="login-logo">SafeSite</h1>
+        <p class="login-tagline">
+          Cloud-Based Construction Log &amp; Reporting System.<br>
+          Replace paper-based methods with real-time digital safety and progress management.
+        </p>
+        <ul class="login-features">
+          <li>
+            <span>⚡</span>
+            Real-Time Reports
+          </li>
+          <li>
+            <span>🛡️</span>
+            Safety First
+          </li>
+          <li>
+            <span>📊</span>
+            Live Dashboard
+          </li>
+          <li>
+            <span>📱</span>
+            Mobile Ready
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- RIGHT: Login Form -->
+    <div class="login-form-panel">
+      <div class="login-form-header">
+        <h2>Welcome Back</h2>
+        <p>Sign in to access your construction site reports.</p>
+      </div>
+
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" class="form-control" placeholder="supervisor@safesite.com" autocomplete="email" required>
+          <div class="form-error" id="email-error">Please enter a valid email address.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" class="form-control" placeholder="Enter your password" autocomplete="current-password" required>
+          <div class="form-error" id="password-error">Password is required.</div>
+        </div>
+
+        <button type="submit" id="login-btn" class="btn btn-primary btn-block btn-lg" style="margin-top: 0.5rem;">
+          <span class="spinner"></span>
+          Sign In
+        </button>
+
+        <div style="text-align: center; margin: 1.25rem 0; color: var(--text-muted); font-size: 0.85rem;">
+          — or —
+        </div>
+
+        <button type="button" id="demo-btn" class="btn btn-demo btn-block">
+          🔓 Quick Demo Login (Supervisor)
+        </button>
+      </form>
+
+      <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle);">
+        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; line-height: 1.6;">
+          <strong style="color: var(--text-secondary);">Demo Credentials</strong><br>
+          Supervisor: <code style="color: var(--accent-orange);">supervisor@safesite.com</code><br>
+          Manager: <code style="color: var(--accent-orange);">manager@safesite.com</code><br>
+          Password: <code style="color: var(--accent-orange);">demo123</code>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // If already logged in, redirect to dashboard
+    if (Auth.getCurrentUser()) {
+      window.location.href = 'dashboard.html';
+    }
+
+    const loginForm = document.getElementById('login-form');
+    const emailInput = document.getElementById('login-email');
+    const passwordInput = document.getElementById('login-password');
+    const loginBtn = document.getElementById('login-btn');
+    const demoBtn = document.getElementById('demo-btn');
+    const emailError = document.getElementById('email-error');
+    const passwordError = document.getElementById('password-error');
+
+    function clearErrors() {
+      emailError.classList.remove('visible');
+      passwordError.classList.remove('visible');
+      emailInput.classList.remove('error');
+      passwordInput.classList.remove('error');
+    }
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      clearErrors();
+
+      let valid = true;
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !email.includes('@')) {
+        emailError.classList.add('visible');
+        emailInput.classList.add('error');
+        valid = false;
+      }
+
+      if (!password) {
+        passwordError.classList.add('visible');
+        passwordInput.classList.add('error');
+        valid = false;
+      }
+
+      if (!valid) return;
+
+      loginBtn.classList.add('loading');
+
+      setTimeout(() => {
+        const result = Auth.signIn(email, password);
+        loginBtn.classList.remove('loading');
+
+        if (result.success) {
+          window.location.href = 'dashboard.html';
+        } else {
+          emailError.textContent = result.error;
+          emailError.classList.add('visible');
+          emailInput.classList.add('error');
+        }
+      }, 600);
+    });
+
+    demoBtn.addEventListener('click', () => {
+      demoBtn.classList.add('loading');
+      setTimeout(() => {
+        Auth.demoSignIn();
+        window.location.href = 'dashboard.html';
+      }, 400);
+    });
+  </script>
+</body>
+</html>

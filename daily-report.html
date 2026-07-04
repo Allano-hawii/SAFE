@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Submit a daily construction progress report — SafeSite digital reporting system.">
+  <title>Daily Report — SafeSite</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-brand-icon">🏗️</span>
+        <h1>SafeSite</h1>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a></li>
+        <li><a href="daily-report.html" class="active"><span class="nav-icon">📝</span> Daily Report</a></li>
+        <li><a href="safety-incident.html"><span class="nav-icon">🚨</span> Safety Incident</a></li>
+        <li><a href="reports.html"><span class="nav-icon">📋</span> View Reports</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-avatar" id="sidebar-avatar">JO</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">role</div>
+          </div>
+        </div>
+        <a href="#" id="sign-out-btn" class="btn btn-ghost btn-block" style="margin-top: 0.75rem; font-size: 0.82rem;">🚪 Sign Out</a>
+      </div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <button class="hamburger" id="hamburger-btn">☰</button>
+          <h2>📝 New Daily Report</h2>
+        </div>
+        <div class="top-bar-right">
+          <a href="dashboard.html" class="btn btn-ghost" style="font-size: 0.85rem;">← Back to Dashboard</a>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="form-page-container">
+          <form id="daily-report-form" novalidate>
+            <!-- Section 1: General Info -->
+            <div class="card">
+              <div class="card-body">
+                <div class="form-section-title">📋 General Information</div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="report-date">Date <span class="required">*</span></label>
+                    <input type="date" id="report-date" class="form-control" required>
+                    <div class="form-error" id="date-error">Date is required.</div>
+                  </div>
+                  <div class="form-group">
+                    <label for="report-site">Site Name <span class="required">*</span></label>
+                    <select id="report-site" class="form-control" required>
+                      <option value="">Select site...</option>
+                    </select>
+                    <div class="form-error" id="site-error">Please select a site.</div>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="report-weather">Weather Conditions <span class="required">*</span></label>
+                    <select id="report-weather" class="form-control" required>
+                      <option value="">Select weather...</option>
+                      <option value="Clear">☀️ Clear</option>
+                      <option value="Rainy">🌧️ Rainy</option>
+                      <option value="Overcast">☁️ Overcast</option>
+                      <option value="Windy">💨 Windy</option>
+                    </select>
+                    <div class="form-error" id="weather-error">Please select weather conditions.</div>
+                  </div>
+                  <div class="form-group">
+                    <label for="report-equipment">Equipment Status <span class="required">*</span></label>
+                    <select id="report-equipment" class="form-control" required>
+                      <option value="">Select status...</option>
+                      <option value="Operational">✅ Operational</option>
+                      <option value="Needs Repair">🔧 Needs Repair</option>
+                      <option value="Out of Service">🚫 Out of Service</option>
+                    </select>
+                    <div class="form-error" id="equipment-error">Please select equipment status.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 2: Work & Materials -->
+            <div class="card">
+              <div class="card-body">
+                <div class="form-section-title">🔨 Work & Materials</div>
+                <div class="form-group">
+                  <label for="report-work">Work Completed Today <span class="required">*</span></label>
+                  <textarea id="report-work" class="form-control" rows="4" placeholder="Describe the work completed today in detail..." required></textarea>
+                  <div class="form-error" id="work-error">Please describe the work completed (min 10 characters).</div>
+                </div>
+
+                <div class="form-group">
+                  <label>Materials Used</label>
+                  <div id="materials-list">
+                    <div class="input-group">
+                      <input type="text" class="form-control material-input" placeholder="e.g., Concrete 32.5R — 45 bags">
+                      <button type="button" class="btn btn-icon btn-secondary" onclick="addMaterialRow()">+</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 3: Labor & Progress -->
+            <div class="card">
+              <div class="card-body">
+                <div class="form-section-title">👷 Labor & Progress</div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="report-skilled">Skilled Labor Count <span class="required">*</span></label>
+                    <input type="number" id="report-skilled" class="form-control" min="0" max="500" placeholder="0" required>
+                    <div class="form-error" id="skilled-error">Enter a valid number (0–500).</div>
+                  </div>
+                  <div class="form-group">
+                    <label for="report-unskilled">Unskilled Labor Count <span class="required">*</span></label>
+                    <input type="number" id="report-unskilled" class="form-control" min="0" max="500" placeholder="0" required>
+                    <div class="form-error" id="unskilled-error">Enter a valid number (0–500).</div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="report-completion">Overall Completion Percentage <span class="required">*</span></label>
+                  <div class="range-container">
+                    <input type="range" id="report-completion" min="0" max="100" value="0">
+                    <div class="range-value" id="completion-display">0%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 4: Notes -->
+            <div class="card">
+              <div class="card-body">
+                <div class="form-section-title">📎 Additional Notes</div>
+                <div class="form-group">
+                  <label for="report-notes">Notes / Observations</label>
+                  <textarea id="report-notes" class="form-control" rows="3" placeholder="Any additional observations, issues, or notes..."></textarea>
+                </div>
+              </div>
+
+              <div class="card-footer">
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">Clear Form</button>
+                <button type="submit" id="submit-btn" class="btn btn-primary btn-lg">
+                  <span class="spinner"></span>
+                  ✅ Submit Report
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/daily-report.js"></script>
+</body>
+</html>

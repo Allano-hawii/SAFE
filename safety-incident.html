@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Report safety incidents and hazards on construction sites — SafeSite incident reporting module.">
+  <title>Safety Incident — SafeSite</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-brand-icon">🏗️</span>
+        <h1>SafeSite</h1>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a></li>
+        <li><a href="daily-report.html"><span class="nav-icon">📝</span> Daily Report</a></li>
+        <li><a href="safety-incident.html" class="active"><span class="nav-icon">🚨</span> Safety Incident</a></li>
+        <li><a href="reports.html"><span class="nav-icon">📋</span> View Reports</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-avatar" id="sidebar-avatar">JO</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">User</div>
+            <div class="sidebar-user-role" id="sidebar-user-role">role</div>
+          </div>
+        </div>
+        <a href="#" id="sign-out-btn" class="btn btn-ghost btn-block" style="margin-top: 0.75rem; font-size: 0.82rem;">🚪 Sign Out</a>
+      </div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <button class="hamburger" id="hamburger-btn">☰</button>
+          <h2>🚨 Report Safety Incident</h2>
+        </div>
+        <div class="top-bar-right">
+          <a href="dashboard.html" class="btn btn-ghost" style="font-size: 0.85rem;">← Back to Dashboard</a>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="form-page-container">
+          <form id="incident-form" novalidate>
+            <!-- Section 1: Incident Details -->
+            <div class="card urgency-indicator" id="incident-card">
+              <div class="card-body">
+                <div class="form-section-title">🚨 Incident Details</div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="incident-datetime">Date & Time <span class="required">*</span></label>
+                    <input type="datetime-local" id="incident-datetime" class="form-control" required>
+                    <div class="form-error" id="datetime-error">Date and time are required.</div>
+                  </div>
+                  <div class="form-group">
+                    <label for="incident-site">Site Name <span class="required">*</span></label>
+                    <select id="incident-site" class="form-control" required>
+                      <option value="">Select site...</option>
+                    </select>
+                    <div class="form-error" id="isite-error">Please select a site.</div>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="incident-location">Location on Site <span class="required">*</span></label>
+                    <input type="text" id="incident-location" class="form-control" placeholder="e.g., Block B, 3rd Floor, East Wing" required>
+                    <div class="form-error" id="location-error">Please specify the location on site.</div>
+                  </div>
+                  <div class="form-group">
+                    <label for="incident-type">Incident Type <span class="required">*</span></label>
+                    <select id="incident-type" class="form-control" required>
+                      <option value="">Select type...</option>
+                      <option value="Fall">🧗 Fall</option>
+                      <option value="Electrical">⚡ Electrical</option>
+                      <option value="Structural">🏗️ Structural</option>
+                      <option value="Chemical">🧪 Chemical</option>
+                      <option value="Equipment Failure">⚙️ Equipment Failure</option>
+                      <option value="Near-Miss">⚠️ Near-Miss</option>
+                      <option value="Other">📌 Other</option>
+                    </select>
+                    <div class="form-error" id="type-error">Please select an incident type.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 2: Urgency -->
+            <div class="card">
+              <div class="card-body">
+                <div class="form-section-title">⚠️ Urgency Level <span class="required">*</span></div>
+                <div class="radio-group" id="urgency-group">
+                  <div class="radio-card">
+                    <input type="radio" name="urgency" id="urgency-low" value="Low">
+                    <label for="urgency-low" class="radio-card-label urgency-low">
+                      <span class="radio-emoji">🟢</span>
+                      Low
+                      <span style="font-size: 0.75rem; color: var(--text-muted);">Minor, no injuries</span>
+                    </label>
+                  </div>
+                  <div class="radio-card">
+                    <input type="radio" name="urgency" id="urgency-medium" value="Medium">
+                    <label for="urgency-medium" class="radio-card-label urgency-medium">
+                      <span class="radio-emoji">🟡</span>
+                      Medium
+                      <span style="font-size: 0.75rem; color: var(--text-muted);">Potential risk, near-miss</span>
+                    </label>
+                  </div>
+                  <div class="radio-card">
+                    <input type="radio" name="urgency" id="urgency-high" value="High">
+                    <label for="urgency-high" class="radio-card-label urgency-high">
+                      <span class="radio-emoji">🔴</span>
+                      High
+                      <span style="font-size: 0.75rem; color: var(--text-muted);">Critical, immediate action</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="form-error" id="urgency-error" style="margin-top: 0.5rem;">Please select an urgency level.</div>
+              </div>
+            </div>
+
+            <!-- Section 3: Description -->
+            <div class="card">
+              <div class="card-body">
+                <div class="form-section-title">📝 Description & Response</div>
+                <div class="form-group">
+                  <label for="incident-description">Incident Description <span class="required">*</span></label>
+                  <textarea id="incident-description" class="form-control" rows="4" placeholder="Describe what happened in detail (minimum 20 characters)..." required></textarea>
+                  <div class="form-error" id="description-error">Description must be at least 20 characters.</div>
+                </div>
+
+                <div class="form-group">
+                  <label>Injuries Reported?</label>
+                  <div class="toggle-container">
+                    <label class="toggle">
+                      <input type="checkbox" id="incident-injuries">
+                      <span class="toggle-slider"></span>
+                    </label>
+                    <span id="injuries-label" style="font-size: 0.9rem; color: var(--text-secondary);">No injuries</span>
+                  </div>
+                </div>
+
+                <div class="conditional-section" id="injury-details-section">
+                  <div class="form-group">
+                    <label for="incident-injury-details">Injury Details <span class="required">*</span></label>
+                    <textarea id="incident-injury-details" class="form-control" rows="2" placeholder="Describe the injuries and first aid administered..."></textarea>
+                    <div class="form-error" id="injury-details-error">Please describe the injuries.</div>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                  <label for="incident-action">Immediate Action Taken <span class="required">*</span></label>
+                  <textarea id="incident-action" class="form-control" rows="3" placeholder="What actions were taken to address the incident or mitigate the hazard?" required></textarea>
+                  <div class="form-error" id="action-error">Please describe the actions taken.</div>
+                </div>
+              </div>
+
+              <div class="card-footer">
+                <button type="button" class="btn btn-secondary" onclick="resetIncidentForm()">Clear Form</button>
+                <button type="submit" id="incident-submit-btn" class="btn btn-primary btn-lg">
+                  <span class="spinner"></span>
+                  🚨 Submit Incident Report
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/safety-incident.js"></script>
+</body>
+</html>

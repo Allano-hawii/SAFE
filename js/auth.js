@@ -14,26 +14,23 @@ const Auth = {
 
   // Get currently logged-in user
   getCurrentUser() {
-    // In Firebase mode, check Firebase auth state
-    if (!DEMO_MODE && firebaseAuth) {
+    // Always check localStorage first — it's set during sign-in
+    // and available immediately (no async Firebase delay)
+    const stored = localStorage.getItem('safesite_currentUser');
+    if (stored) return JSON.parse(stored);
+
+    // In Firebase mode, check if Firebase has restored the session
+    if (!DEMO_MODE && firebaseAuth && firebaseAuth.currentUser) {
       const fbUser = firebaseAuth.currentUser;
-      if (fbUser) {
-        // Also check localStorage for profile data
-        const profile = localStorage.getItem('safesite_currentUser');
-        if (profile) return JSON.parse(profile);
-        return {
-          id: fbUser.uid,
-          email: fbUser.email,
-          name: fbUser.displayName || fbUser.email,
-          role: 'supervisor'
-        };
-      }
-      return null;
+      return {
+        id: fbUser.uid,
+        email: fbUser.email,
+        name: fbUser.displayName || fbUser.email,
+        role: 'supervisor'
+      };
     }
 
-    // Demo mode
-    const raw = localStorage.getItem('safesite_currentUser');
-    return raw ? JSON.parse(raw) : null;
+    return null;
   },
 
   // Sign in with email/password

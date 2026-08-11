@@ -177,8 +177,8 @@ const UI = {
   },
 
   // --- Get site options ---
-  getSiteOptions() {
-    const sites = SafeSiteDB.getAll('sites');
+  async getSiteOptions() {
+    const sites = await SafeSiteDB.getAll('sites');
     return sites.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
   }
 };

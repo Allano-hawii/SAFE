@@ -17,16 +17,16 @@ document.addEventListener('DOMContentLoaded', () => {
   updateNotificationBadge();
 });
 
-function loadStats() {
+async function loadStats() {
   const today = UI.today();
 
   // Reports today
-  const allReports = SafeSiteDB.getAll('dailyReports');
+  const allReports = await SafeSiteDB.getAll('dailyReports');
   const todayReports = allReports.filter(r => r.date === today);
   document.getElementById('stat-reports-today').textContent = todayReports.length;
 
   // Open incidents
-  const allIncidents = SafeSiteDB.getAll('safetyIncidents');
+  const allIncidents = await SafeSiteDB.getAll('safetyIncidents');
   const openIncidents = allIncidents.filter(i => i.status !== 'Resolved');
   document.getElementById('stat-open-incidents').textContent = openIncidents.length;
 
@@ -41,13 +41,13 @@ function loadStats() {
   }
 }
 
-function loadActivityFeed() {
+async function loadActivityFeed() {
   const feed = document.getElementById('activity-feed');
   const empty = document.getElementById('activity-empty');
 
   // Combine reports and incidents, sort by createdAt
-  const reports = SafeSiteDB.getAll('dailyReports').map(r => ({ ...r, _type: 'report' }));
-  const incidents = SafeSiteDB.getAll('safetyIncidents').map(i => ({ ...i, _type: 'incident' }));
+  const reports = (await SafeSiteDB.getAll('dailyReports')).map(r => ({ ...r, _type: 'report' }));
+  const incidents = (await SafeSiteDB.getAll('safetyIncidents')).map(i => ({ ...i, _type: 'incident' }));
 
   const all = [...reports, ...incidents]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -85,8 +85,8 @@ function loadActivityFeed() {
   }).join('');
 }
 
-function loadUrgencyChart() {
-  const incidents = SafeSiteDB.getAll('safetyIncidents');
+async function loadUrgencyChart() {
+  const incidents = await SafeSiteDB.getAll('safetyIncidents');
   const low = incidents.filter(i => i.urgency === 'Low').length;
   const medium = incidents.filter(i => i.urgency === 'Medium').length;
   const high = incidents.filter(i => i.urgency === 'High').length;
@@ -117,8 +117,8 @@ function loadUrgencyChart() {
     .join('');
 }
 
-function loadHighUrgencyAlerts() {
-  const incidents = SafeSiteDB.getAll('safetyIncidents')
+async function loadHighUrgencyAlerts() {
+  const incidents = (await SafeSiteDB.getAll('safetyIncidents'))
     .filter(i => i.urgency === 'High' && i.status !== 'Resolved');
   
   const tbody = document.getElementById('alerts-tbody');
@@ -146,9 +146,9 @@ function loadHighUrgencyAlerts() {
   `).join('');
 }
 
-function updateNotificationBadge() {
-  const high = SafeSiteDB.getAll('safetyIncidents')
-    .filter(i => i.urgency === 'High' && i.status !== 'Resolved').length;
+async function updateNotificationBadge() {
+  const incidents = await SafeSiteDB.getAll('safetyIncidents');
+  const high = incidents.filter(i => i.urgency === 'High' && i.status !== 'Resolved').length;
 
   const notifBadge = document.getElementById('notif-badge');
   const navBadge = document.getElementById('incident-nav-badge');

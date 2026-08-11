@@ -2,7 +2,7 @@
 // SafeSite — Daily Report Logic
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const user = Auth.requireAuth();
   if (!user) return;
 
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('report-date').value = UI.today();
 
   // Populate site dropdown
-  document.getElementById('report-site').innerHTML = '<option value="">Select site...</option>' + UI.getSiteOptions();
+  document.getElementById('report-site').innerHTML = '<option value="">Select site...</option>' + await UI.getSiteOptions();
 
   // Completion slider
   const slider = document.getElementById('report-completion');
@@ -52,7 +52,7 @@ function resetForm() {
   document.querySelectorAll('.form-control').forEach(c => c.classList.remove('error'));
 }
 
-function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault();
 
   // Clear previous errors
@@ -117,14 +117,16 @@ function handleSubmit(e) {
   const btn = document.getElementById('submit-btn');
   btn.classList.add('loading');
 
-  setTimeout(() => {
-    SafeSiteDB.add('dailyReports', report);
+  try {
+    await SafeSiteDB.add('dailyReports', report);
     btn.classList.remove('loading');
     UI.toast('success', 'Report Submitted', `Daily report for ${report.siteName} has been saved successfully.`);
-    
-    // Reset form after success
     setTimeout(() => resetForm(), 500);
-  }, 800);
+  } catch (err) {
+    btn.classList.remove('loading');
+    UI.toast('error', 'Submission Failed', 'Could not save the report. Please try again.');
+    console.error('Report submission error:', err);
+  }
 }
 
 function showError(fieldId) {

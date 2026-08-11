@@ -2,7 +2,7 @@
 // SafeSite — Safety Incident Report Logic
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const user = Auth.requireAuth();
   if (!user) return;
 
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('incident-datetime').value = UI.nowLocal();
 
   // Populate site dropdown
-  document.getElementById('incident-site').innerHTML = '<option value="">Select site...</option>' + UI.getSiteOptions();
+  document.getElementById('incident-site').innerHTML = '<option value="">Select site...</option>' + await UI.getSiteOptions();
 
   // Urgency radio — change card border color
   document.querySelectorAll('input[name="urgency"]').forEach(radio => {
@@ -58,7 +58,7 @@ function resetIncidentForm() {
   document.querySelectorAll('.form-control').forEach(c => c.classList.remove('error'));
 }
 
-function handleIncidentSubmit(e) {
+async function handleIncidentSubmit(e) {
   e.preventDefault();
 
   // Clear previous errors
@@ -121,8 +121,8 @@ function handleIncidentSubmit(e) {
   const btn = document.getElementById('incident-submit-btn');
   btn.classList.add('loading');
 
-  setTimeout(() => {
-    SafeSiteDB.add('safetyIncidents', incident);
+  try {
+    await SafeSiteDB.add('safetyIncidents', incident);
     btn.classList.remove('loading');
 
     if (incident.urgency === 'High') {
@@ -134,7 +134,11 @@ function handleIncidentSubmit(e) {
     }
 
     setTimeout(() => resetIncidentForm(), 500);
-  }, 800);
+  } catch (err) {
+    btn.classList.remove('loading');
+    UI.toast('error', 'Submission Failed', 'Could not save the incident. Please try again.');
+    console.error('Incident submission error:', err);
+  }
 }
 
 function showIncidentError(errorId, inputEl) {

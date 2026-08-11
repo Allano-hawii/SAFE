@@ -9,7 +9,7 @@ let dailySortAsc = false;
 let incidentSortKey = 'dateTime';
 let incidentSortAsc = false;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const user = Auth.requireAuth();
   if (!user) return;
 
@@ -19,31 +19,31 @@ document.addEventListener('DOMContentLoaded', () => {
   UI.initTabs();
 
   // Populate site dropdowns
-  const siteOpts = '<option value="all">All Sites</option>' + UI.getSiteOptions();
+  const siteOpts = '<option value="all">All Sites</option>' + await UI.getSiteOptions();
   document.getElementById('filter-daily-site').innerHTML = siteOpts;
   document.getElementById('filter-inc-site').innerHTML = siteOpts;
 
   // Load data
-  loadDailyReports();
-  loadIncidents();
+  await loadDailyReports();
+  await loadIncidents();
 
   // Filter buttons
   document.getElementById('apply-daily-filters').addEventListener('click', loadDailyReports);
-  document.getElementById('clear-daily-filters').addEventListener('click', () => {
+  document.getElementById('clear-daily-filters').addEventListener('click', async () => {
     document.getElementById('filter-daily-from').value = '';
     document.getElementById('filter-daily-to').value = '';
     document.getElementById('filter-daily-site').value = 'all';
-    loadDailyReports();
+    await loadDailyReports();
   });
 
   document.getElementById('apply-inc-filters').addEventListener('click', loadIncidents);
-  document.getElementById('clear-inc-filters').addEventListener('click', () => {
+  document.getElementById('clear-inc-filters').addEventListener('click', async () => {
     document.getElementById('filter-inc-from').value = '';
     document.getElementById('filter-inc-to').value = '';
     document.getElementById('filter-inc-site').value = 'all';
     document.getElementById('filter-inc-urgency').value = 'all';
     document.getElementById('filter-inc-status').value = 'all';
-    loadIncidents();
+    await loadIncidents();
   });
 
   // Sort headers — daily
@@ -73,14 +73,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ==================== DAILY REPORTS ====================
 
-function loadDailyReports() {
+async function loadDailyReports() {
   const filters = {
     dateFrom: document.getElementById('filter-daily-from').value,
     dateTo: document.getElementById('filter-daily-to').value,
     siteName: document.getElementById('filter-daily-site').value,
   };
 
-  currentDailyData = SafeSiteDB.query('dailyReports', filters);
+  currentDailyData = await SafeSiteDB.query('dailyReports', filters);
   renderDailyTable();
 }
 
@@ -133,8 +133,8 @@ function renderDailyTable() {
   }).join('');
 }
 
-function showDailyDetail(id) {
-  const r = SafeSiteDB.getById('dailyReports', id);
+async function showDailyDetail(id) {
+  const r = await SafeSiteDB.getById('dailyReports', id);
   if (!r) return;
 
   document.getElementById('modal-title').textContent = `Daily Report — ${r.siteName}`;
@@ -177,7 +177,7 @@ function showDailyDetail(id) {
 
 // ==================== INCIDENTS ====================
 
-function loadIncidents() {
+async function loadIncidents() {
   const filters = {
     dateFrom: document.getElementById('filter-inc-from').value,
     dateTo: document.getElementById('filter-inc-to').value,
@@ -186,7 +186,7 @@ function loadIncidents() {
     status: document.getElementById('filter-inc-status').value,
   };
 
-  currentIncidentData = SafeSiteDB.query('safetyIncidents', filters);
+  currentIncidentData = await SafeSiteDB.query('safetyIncidents', filters);
   renderIncidentsTable();
 }
 
@@ -233,8 +233,8 @@ function renderIncidentsTable() {
   `).join('');
 }
 
-function showIncidentDetail(id) {
-  const i = SafeSiteDB.getById('safetyIncidents', id);
+async function showIncidentDetail(id) {
+  const i = await SafeSiteDB.getById('safetyIncidents', id);
   if (!i) return;
 
   document.getElementById('modal-title').textContent = `Incident — ${i.incidentType} at ${i.siteName}`;
@@ -278,10 +278,10 @@ function showIncidentDetail(id) {
   openModal();
 }
 
-function updateIncidentStatus(id, newStatus) {
-  SafeSiteDB.update('safetyIncidents', id, { status: newStatus });
+async function updateIncidentStatus(id, newStatus) {
+  await SafeSiteDB.update('safetyIncidents', id, { status: newStatus });
   closeModal();
-  loadIncidents();
+  await loadIncidents();
   UI.toast('success', 'Status Updated', `Incident marked as "${newStatus}".`);
 }
 

@@ -38,9 +38,10 @@ service cloud.firestore {
       // Admins/managers can read all profiles
       allow read: if isAuthenticated() && (isOwner(userId) || isManagerOrAdmin());
 
-      // Only admins can create/update user profiles
-      // Users can update their own non-role fields
-      allow create: if isAuthenticated() && isAdmin();
+      // Allow users to create their own profile (Google sign-in auto-registration)
+      // Admins can create any user profile
+      allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      
       allow update: if isAuthenticated() && (
         isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'email'])
         || isAdmin()

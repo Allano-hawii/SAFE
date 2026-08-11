@@ -135,5 +135,64 @@ const Auth = {
     if (!DEMO_MODE && firebaseAuth) {
       firebaseAuth.onAuthStateChanged(callback);
     }
+  },
+
+  // ---- Google Sign-In ----
+  // Automatically registers the user if they don't have an account
+  async signInWithGoogle() {
+    if (!firebaseAuth) {
+      return { success: false, error: 'Firebase is not configured.' };
+    }
+
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const result = await firebaseAuth.signInWithPopup(provider);
+      const user = result.user;
+
+      // Build profile from Google account
+      let profile = {
+        id: user.uid,
+        email: user.email,
+        name: user.displayName || user.email,
+        photoURL: user.photoURL || null,
+        role: 'supervisor', // default role for new Google users
+        site: 'All Sites'
+      };
+
+      // Check if user already exists in Firestore
+      if (firebaseDB) {
+        try {
+          const doc = await firebaseDB.collection('users').doc(user.uid).get();
+          if (doc.exists) {
+            // Existing user — use their stored profile
+            profile = { id: user.uid, ...doc.data() };
+          } else {
+            // New user — auto-register by saving profile to Firestore
+            await firebaseDB.collection('users').doc(user.uid).set({
+              email: user.email,
+              name: user.displayName || user.email,
+              photoURL: user.photoURL || null,
+              role: 'supervisor',
+              site: 'All Sites',
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              authProvider: 'google'
+            });
+            console.log('✅ New Google user auto-registered:', user.email);
+          }
+        } catch (e) {
+          console.warn('Firestore profile check/create failed:', e);
+        }
+      }
+
+      localStorage.setItem('safesite_currentUser', JSON.stringify(profile));
+      return { success: true, user: profile };
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+      let errorMsg = 'Google sign-in failed. Please try again.';
+      if (err.code === 'auth/popup-closed-by-user') errorMsg = 'Sign-in cancelled.';
+      if (err.code === 'auth/popup-blocked') errorMsg = 'Pop-up blocked. Please allow pop-ups and try again.';
+      if (err.code === 'auth/account-exists-with-different-credential') errorMsg = 'An account already exists with this email using a different sign-in method.';
+      return { success: false, error: errorMsg };
+    }
   }
 };

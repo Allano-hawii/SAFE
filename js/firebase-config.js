@@ -1,31 +1,66 @@
 // ============================================
 // SafeSite — Firebase Configuration
 // ============================================
-// INSTRUCTIONS: Replace the config below with your
-// actual Firebase project credentials from:
-// https://console.firebase.google.com → Project Settings → Web App
+// INSTRUCTIONS:
+// 1. Go to https://console.firebase.google.com
+// 2. Open your project → Project Settings → General → Your apps → Web app
+// 3. Copy the config values below
+// 4. Set DEMO_MODE to false to use real Firebase
+
+// ============================================
+// 🔧 CONFIGURATION — EDIT THESE VALUES
+// ============================================
+
+const DEMO_MODE = false; // Firebase is now configured!
 
 const firebaseConfig = {
-  apiKey: "PLACEHOLDER_API_KEY",
-  authDomain: "safesite-demo.firebaseapp.com",
-  projectId: "safesite-demo",
-  storageBucket: "safesite-demo.appspot.com",
-  messagingSenderId: "000000000000",
-  appId: "1:000000000000:web:0000000000000000"
+  apiKey: "AIzaSyBrj49ySYF1RBZgpBKZR1oIgDW92d9mWJ8",
+  authDomain: "safesite-93be8.firebaseapp.com",
+  projectId: "safesite-93be8",
+  storageBucket: "safesite-93be8.firebasestorage.app",
+  messagingSenderId: "213156576491",
+  appId: "1:213156576491:web:26a08f59c35fc5162012ae",
+  measurementId: "G-DBE9B1YRKW"
 };
 
 // ============================================
-// DEMO MODE — Local Storage Mock Database
+// Firebase Initialization (only when not in demo mode)
 // ============================================
-// Since Firebase isn't configured yet, the app runs
-// in full demo mode using localStorage. All CRUD
-// operations work locally. Replace with real Firebase
-// calls when you have a project.
 
-const DEMO_MODE = true;
+let firebaseApp = null;
+let firebaseAuth = null;
+let firebaseDB = null;
+
+if (!DEMO_MODE) {
+  // Firebase is loaded via CDN in HTML files
+  // These will be available after firebase scripts load
+  try {
+    firebaseApp = firebase.initializeApp(firebaseConfig);
+    firebaseAuth = firebase.auth();
+    firebaseDB = firebase.firestore();
+    console.log('✅ Firebase initialized successfully');
+  } catch (err) {
+    console.error('❌ Firebase initialization failed:', err);
+    console.warn('⚠️ Falling back to demo mode');
+  }
+}
+
+// ============================================
+// SafeSiteDB — Unified Data Layer
+// Provides the same API for both Firebase and Demo mode
+// ============================================
 
 const SafeSiteDB = {
-  // --- Generic CRUD via localStorage ---
+
+  // ---- Mode Detection ----
+  isFirebase() {
+    return !DEMO_MODE && firebaseDB !== null;
+  },
+
+  // ============================================
+  // LOCAL STORAGE (DEMO MODE) HELPERS
+  // ============================================
+
   _getCollection(name) {
     const raw = localStorage.getItem(`safesite_${name}`);
     return raw ? JSON.parse(raw) : [];
@@ -35,28 +70,58 @@ const SafeSiteDB = {
     localStorage.setItem(`safesite_${name}`, JSON.stringify(data));
   },
 
+  // ============================================
+  // UNIFIED CRUD API
+  // ============================================
+
   // Add a document to a collection
-  add(collection, doc) {
+  async add(collection, doc) {
+    if (this.isFirebase()) {
+      doc.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      const ref = await firebaseDB.collection(collection).add(doc);
+      return { ...doc, id: ref.id };
+    }
+
+    // Demo mode
     const data = this._getCollection(collection);
     doc.id = 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     doc.createdAt = new Date().toISOString();
-    data.unshift(doc); // newest first
+    data.unshift(doc);
     this._saveCollection(collection, data);
     return doc;
   },
 
   // Get all documents from a collection
-  getAll(collection) {
+  async getAll(collection) {
+    if (this.isFirebase()) {
+      const snapshot = await firebaseDB.collection(collection)
+        .orderBy('createdAt', 'desc')
+        .get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
     return this._getCollection(collection);
   },
 
   // Get a single document by ID
-  getById(collection, id) {
+  async getById(collection, id) {
+    if (this.isFirebase()) {
+      const doc = await firebaseDB.collection(collection).doc(id).get();
+      return doc.exists ? { id: doc.id, ...doc.data() } : null;
+    }
+
     return this._getCollection(collection).find(d => d.id === id) || null;
   },
 
   // Update a document
-  update(collection, id, updates) {
+  async update(collection, id, updates) {
+    if (this.isFirebase()) {
+      updates.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+      await firebaseDB.collection(collection).doc(id).update(updates);
+      return { id, ...updates };
+    }
+
+    // Demo mode
     const data = this._getCollection(collection);
     const idx = data.findIndex(d => d.id === id);
     if (idx === -1) return null;
@@ -66,15 +131,40 @@ const SafeSiteDB = {
   },
 
   // Delete a document
-  remove(collection, id) {
+  async remove(collection, id) {
+    if (this.isFirebase()) {
+      await firebaseDB.collection(collection).doc(id).delete();
+      return;
+    }
+
     const data = this._getCollection(collection).filter(d => d.id !== id);
     this._saveCollection(collection, data);
   },
 
   // Query with filters
-  query(collection, filters = {}) {
+  async query(collection, filters = {}) {
+    if (this.isFirebase()) {
+      let query = firebaseDB.collection(collection);
+
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== 'all' && value !== '') {
+          if (key === 'dateFrom') {
+            query = query.where('date', '>=', value);
+          } else if (key === 'dateTo') {
+            query = query.where('date', '<=', value + 'T23:59:59');
+          } else {
+            query = query.where(key, '==', value);
+          }
+        }
+      });
+
+      const snapshot = await query.get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    // Demo mode
     let data = this._getCollection(collection);
-    
+
     Object.entries(filters).forEach(([key, value]) => {
       if (value && value !== 'all' && value !== '') {
         data = data.filter(d => {
@@ -89,12 +179,19 @@ const SafeSiteDB = {
   },
 
   // Count documents
-  count(collection, filters = {}) {
-    return this.query(collection, filters).length;
+  async count(collection, filters = {}) {
+    const results = await this.query(collection, filters);
+    return results.length;
   },
 
-  // Seed demo data if empty
+  // ============================================
+  // DEMO DATA SEEDING
+  // ============================================
+
   seedIfEmpty() {
+    // Only seed in demo mode
+    if (this.isFirebase()) return;
+
     if (this._getCollection('dailyReports').length === 0) {
       this._seedDailyReports();
     }

@@ -86,6 +86,11 @@
     </div>
   </div>
 
+  <!-- Firebase SDK (v9 compat) — only loaded, used when DEMO_MODE is false -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
   <script>
@@ -109,7 +114,7 @@
       passwordInput.classList.remove('error');
     }
 
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearErrors();
 
@@ -133,8 +138,8 @@
 
       loginBtn.classList.add('loading');
 
-      setTimeout(() => {
-        const result = Auth.signIn(email, password);
+      try {
+        const result = await Auth.signIn(email, password);
         loginBtn.classList.remove('loading');
 
         if (result.success) {
@@ -144,15 +149,22 @@
           emailError.classList.add('visible');
           emailInput.classList.add('error');
         }
-      }, 600);
+      } catch (err) {
+        loginBtn.classList.remove('loading');
+        emailError.textContent = 'An error occurred. Please try again.';
+        emailError.classList.add('visible');
+      }
     });
 
-    demoBtn.addEventListener('click', () => {
+    demoBtn.addEventListener('click', async () => {
       demoBtn.classList.add('loading');
-      setTimeout(() => {
-        Auth.demoSignIn();
+      try {
+        await Auth.demoSignIn();
         window.location.href = 'dashboard.html';
-      }, 400);
+      } catch (err) {
+        demoBtn.classList.remove('loading');
+        console.error('Demo login failed:', err);
+      }
     });
   </script>
 </body>

@@ -38,10 +38,12 @@ const Auth = {
     const normalizedEmail = (email || '').trim().toLowerCase();
     const trimmedPassword = (password || '').trim();
 
-    // Try Firebase first if configured
+    // Try Firebase first if configured (with 5s timeout to prevent hanging)
     if (!DEMO_MODE && firebaseAuth) {
       try {
-        const credential = await firebaseAuth.signInWithEmailAndPassword(normalizedEmail, trimmedPassword);
+        const firebasePromise = firebaseAuth.signInWithEmailAndPassword(normalizedEmail, trimmedPassword);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 5000));
+        const credential = await Promise.race([firebasePromise, timeoutPromise]);
         const user = credential.user;
 
         // Try to get user profile from Firestore
@@ -86,6 +88,82 @@ const Auth = {
   // Quick demo login (supervisor)
   async demoSignIn() {
     return this.signIn('supervisor@safesite.com', 'demo123');
+  },
+
+  // Register a new user
+  async register(email, password, name, role = 'supervisor', site = 'All Sites') {
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const trimmedPassword = (password || '').trim();
+    const trimmedName = (name || '').trim();
+
+    if (!normalizedEmail || !trimmedPassword || !trimmedName) {
+      return { success: false, error: 'Email, password, and name are required.' };
+    }
+    if (trimmedPassword.length < 6) {
+      return { success: false, error: 'Password must be at least 6 characters.' };
+    }
+
+    // Check if demo user already exists
+    const existing = this.DEMO_USERS.find(u => u.email === normalizedEmail);
+    if (existing) {
+      return { success: false, error: 'An account with this email already exists.' };
+    }
+
+    // Try Firebase registration
+    if (!DEMO_MODE && firebaseAuth) {
+      try {
+        const credential = await firebaseAuth.createUserWithEmailAndPassword(normalizedEmail, trimmedPassword);
+        const user = credential.user;
+        await user.updateProfile({ displayName: trimmedName });
+
+        const profile = {
+          id: user.uid,
+          email: normalizedEmail,
+          name: trimmedName,
+          role: role,
+          site: site
+        };
+
+        // Save to Firestore
+        if (firebaseDB) {
+          try {
+            await firebaseDB.collection('users').doc(user.uid).set({
+              ...profile,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              authProvider: 'email'
+            });
+          } catch (e) {
+            console.warn('Could not save user profile to Firestore:', e);
+          }
+        }
+
+        localStorage.setItem('safesite_currentUser', JSON.stringify(profile));
+        return { success: true, user: profile };
+      } catch (err) {
+        console.warn('Firebase registration failed:', err.code);
+        let errorMsg = 'Registration failed. Please try again.';
+        if (err.code === 'auth/email-already-in-use') errorMsg = 'An account with this email already exists.';
+        if (err.code === 'auth/weak-password') errorMsg = 'Password is too weak. Use at least 6 characters.';
+        if (err.code === 'auth/invalid-email') errorMsg = 'Invalid email format.';
+        return { success: false, error: errorMsg };
+      }
+    }
+
+    // Demo mode — add to local users
+    const newUser = {
+      id: 'user_' + Date.now(),
+      email: normalizedEmail,
+      password: trimmedPassword,
+      name: trimmedName,
+      role: role,
+      site: site
+    };
+    this.DEMO_USERS.push(newUser);
+
+    const sessionUser = { ...newUser };
+    delete sessionUser.password;
+    localStorage.setItem('safesite_currentUser', JSON.stringify(sessionUser));
+    return { success: true, user: sessionUser };
   },
 
   // Sign out

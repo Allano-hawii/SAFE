@@ -66,7 +66,20 @@
           Sign In
         </button>
 
-        <div style="text-align: center; margin: 1.25rem 0; color: var(--text-muted); font-size: 0.85rem;">
+        <div style="text-align: center; margin: 0.75rem 0; color: var(--text-muted); font-size: 0.85rem;">
+          — or —
+        </div>
+
+        <button type="button" id="demo-btn" class="btn btn-block" style="
+          padding: 0.75rem 1.25rem; border: 2px dashed var(--accent-orange, #f59e0b);
+          background: transparent; color: var(--accent-orange, #f59e0b);
+          border-radius: 8px; font-size: 0.95rem; font-weight: 600;
+          cursor: pointer; transition: all 0.2s ease;
+        " onmouseover="this.style.background='var(--accent-orange, #f59e0b)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--accent-orange, #f59e0b)'">
+          🔓 Quick Demo Login (Supervisor)
+        </button>
+
+        <div style="text-align: center; margin: 0.75rem 0; color: var(--text-muted); font-size: 0.85rem;">
           — or —
         </div>
 
@@ -156,6 +169,7 @@
 
       loginBtn.classList.add('loading');
 
+      // Try Firebase first if configured (with 5s timeout)
       try {
         const result = await Auth.signIn(email, password);
         loginBtn.classList.remove('loading');
@@ -169,8 +183,41 @@
         }
       } catch (err) {
         loginBtn.classList.remove('loading');
-        emailError.textContent = 'An error occurred. Please try again.';
-        emailError.classList.add('visible');
+        // Last resort: try direct demo login
+        const demoUser = Auth.DEMO_USERS.find(u => u.email === email.trim().toLowerCase() && u.password === password.trim());
+        if (demoUser) {
+          const sessionUser = { ...demoUser };
+          delete sessionUser.password;
+          localStorage.setItem('safesite_currentUser', JSON.stringify(sessionUser));
+          window.location.href = 'dashboard.html';
+        } else {
+          emailError.textContent = 'An error occurred. Please try again or use Demo Login.';
+          emailError.classList.add('visible');
+        }
+      }
+    });
+
+    // Demo login button
+    const demoBtn = document.getElementById('demo-btn');
+    demoBtn.addEventListener('click', async () => {
+      clearErrors();
+      demoBtn.style.opacity = '0.6';
+      demoBtn.textContent = 'Signing in...';
+      try {
+        const result = await Auth.demoSignIn();
+        if (result.success) {
+          window.location.href = 'dashboard.html';
+        } else {
+          emailError.textContent = result.error;
+          emailError.classList.add('visible');
+          demoBtn.style.opacity = '1';
+          demoBtn.textContent = '🔓 Quick Demo Login (Supervisor)';
+        }
+      } catch (err) {
+        // Direct fallback — bypass everything
+        const demoUser = { id: 'user_demo', email: 'supervisor@safesite.com', name: 'James Ochieng', role: 'supervisor', site: 'Riverside Tower Complex' };
+        localStorage.setItem('safesite_currentUser', JSON.stringify(demoUser));
+        window.location.href = 'dashboard.html';
       }
     });
 

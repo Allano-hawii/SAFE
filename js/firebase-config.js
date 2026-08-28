@@ -1,17 +1,8 @@
 // ============================================
-// SafeSite — Firebase Configuration
-// ============================================
-// INSTRUCTIONS:
-// 1. Go to https://console.firebase.google.com
-// 2. Open your project → Project Settings → General → Your apps → Web app
-// 3. Copy the config values below
-// 4. Set DEMO_MODE to false to use real Firebase
-
-// ============================================
-// 🔧 CONFIGURATION — EDIT THESE VALUES
+// SafeSite — Firebase Configuration & Data Layer
 // ============================================
 
-const DEMO_MODE = false; // Firebase is connected to safesite-93be8!
+const DEMO_MODE = false; // Firebase is actively connected to safesite-93be8!
 
 const firebaseConfig = {
   apiKey: "AIzaSyBrj49ySYF1RBZgpBKZR1oIgDW92d9mWJ8",
@@ -23,170 +14,260 @@ const firebaseConfig = {
 };
 
 // ============================================
-// Firebase Initialization (only when not in demo mode)
+// Firebase Initialization
 // ============================================
 
 let firebaseApp = null;
 let firebaseAuth = null;
 let firebaseDB = null;
 
-if (!DEMO_MODE) {
-  // Firebase is loaded via CDN in HTML files
-  // These will be available after firebase scripts load
+if (!DEMO_MODE && typeof firebase !== 'undefined') {
   try {
-    firebaseApp = firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      firebaseApp = firebase.initializeApp(firebaseConfig);
+    } else {
+      firebaseApp = firebase.app();
+    }
     firebaseAuth = firebase.auth();
     firebaseDB = firebase.firestore();
-    console.log('✅ Firebase initialized successfully');
+    console.log('✅ Connected to Firestore database for project: safesite-93be8');
   } catch (err) {
-    console.error('❌ Firebase initialization failed:', err);
-    console.warn('⚠️ Falling back to demo mode');
+    console.error('❌ Firebase initialization error:', err);
   }
 }
 
 // ============================================
 // SafeSiteDB — Unified Data Layer
-// Provides the same API for both Firebase and Demo mode
+// Synchronizes Firestore Cloud Database & Local Storage
 // ============================================
 
 const SafeSiteDB = {
 
-  // ---- Mode Detection ----
+  // Check if Firestore is actively available
   isFirebase() {
-    return !DEMO_MODE && firebaseDB !== null;
+    return Boolean(firebaseDB);
+  },
+
+  // Helper: Format Firestore document data into standard JS object
+  _formatDoc(doc) {
+    if (!doc) return null;
+    const data = typeof doc.data === 'function' ? doc.data() : doc;
+    const formatted = { id: doc.id || data.id, ...data };
+
+    // Convert Firestore Timestamp objects to ISO strings
+    ['createdAt', 'updatedAt', 'dateTime', 'date'].forEach(field => {
+      if (formatted[field] && typeof formatted[field].toDate === 'function') {
+        formatted[field] = formatted[field].toDate().toISOString();
+      }
+    });
+
+    return formatted;
+  },
+
+  // Helper: Remove undefined values before saving to Firestore
+  _cleanForFirestore(obj) {
+    const clean = {};
+    Object.keys(obj).forEach(key => {
+      if (obj[key] !== undefined && obj[key] !== null) {
+        clean[key] = obj[key];
+      }
+    });
+    return clean;
   },
 
   // ============================================
-  // LOCAL STORAGE (DEMO MODE) HELPERS
+  // LOCAL STORAGE HELPERS
   // ============================================
 
   _getCollection(name) {
-    const raw = localStorage.getItem(`safesite_${name}`);
-    return raw ? JSON.parse(raw) : [];
+    try {
+      const raw = localStorage.getItem(`safesite_${name}`);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
   },
 
   _saveCollection(name, data) {
-    localStorage.setItem(`safesite_${name}`, JSON.stringify(data));
+    try {
+      localStorage.setItem(`safesite_${name}`, JSON.stringify(data));
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
   },
 
   // ============================================
   // UNIFIED CRUD API
   // ============================================
 
-  // Add a document to a collection
+  // Add or Create a document in Firestore & Local Storage
   async add(collection, doc) {
-    // Always save to localStorage for fallback
-    const localDoc = { ...doc };
-    localDoc.id = localDoc.id || 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-    localDoc.createdAt = new Date().toISOString();
-    const data = this._getCollection(collection);
-    data.unshift(localDoc);
-    this._saveCollection(collection, data);
+    const docId = doc.id || ('doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
+    const nowIso = new Date().toISOString();
 
+    const localDoc = {
+      ...doc,
+      id: docId,
+      createdAt: doc.createdAt || nowIso
+    };
+
+    // Update local store immediately for instant UI response
+    const localData = this._getCollection(collection);
+    const existingIdx = localData.findIndex(d => d.id === docId);
+    if (existingIdx >= 0) {
+      localData[existingIdx] = localDoc;
+    } else {
+      localData.unshift(localDoc);
+    }
+    this._saveCollection(collection, localData);
+
+    // Save directly to Firestore Cloud Database
     if (this.isFirebase()) {
       try {
-        doc.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-        const ref = await firebaseDB.collection(collection).add(doc);
-        return { ...doc, id: ref.id };
+        const firestoreData = this._cleanForFirestore({
+          ...localDoc,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await firebaseDB.collection(collection).doc(docId).set(firestoreData, { merge: true });
+        console.log(`🔥 Document saved to Firestore [${collection}/${docId}]`);
+        return { ...localDoc, id: docId };
       } catch (err) {
-        console.warn('Firebase add failed, saved locally:', err);
+        console.error(`Firestore save failed for [${collection}]:`, err);
       }
     }
 
     return localDoc;
   },
 
-  // Get all documents from a collection
+  // Get all documents from a collection (Firestore first, fallback to local)
   async getAll(collection) {
     if (this.isFirebase()) {
       try {
-        const snapshot = await firebaseDB.collection(collection)
-          .orderBy('createdAt', 'desc')
-          .get();
-        const results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if (results.length > 0) return results;
-        // Firestore empty — fall through to localStorage
+        const snapshot = await firebaseDB.collection(collection).get();
+        if (!snapshot.empty) {
+          const results = snapshot.docs.map(doc => this._formatDoc(doc));
+
+          // Sort in memory by date/createdAt descending
+          results.sort((a, b) => {
+            const timeA = new Date(a.createdAt || a.date || a.dateTime || 0).getTime();
+            const timeB = new Date(b.createdAt || b.date || b.dateTime || 0).getTime();
+            return timeB - timeA;
+          });
+
+          // Sync back to local store cache
+          this._saveCollection(collection, results);
+          return results;
+        }
       } catch (err) {
-        console.warn(`Firebase getAll('${collection}') failed, using localStorage:`, err);
+        console.warn(`Firestore getAll('${collection}') notice, using local cache:`, err);
       }
     }
 
-    return this._getCollection(collection);
+    // Fallback to local storage
+    const local = this._getCollection(collection);
+    local.sort((a, b) => {
+      const timeA = new Date(a.createdAt || a.date || a.dateTime || 0).getTime();
+      const timeB = new Date(b.createdAt || b.date || b.dateTime || 0).getTime();
+      return timeB - timeA;
+    });
+    return local;
   },
 
   // Get a single document by ID
   async getById(collection, id) {
     if (this.isFirebase()) {
-      const doc = await firebaseDB.collection(collection).doc(id).get();
-      return doc.exists ? { id: doc.id, ...doc.data() } : null;
+      try {
+        const doc = await firebaseDB.collection(collection).doc(id).get();
+        if (doc.exists) {
+          return this._formatDoc(doc);
+        }
+      } catch (err) {
+        console.warn(`Firestore getById error:`, err);
+      }
     }
 
     return this._getCollection(collection).find(d => d.id === id) || null;
   },
 
-  // Update a document
+  // Update a document in Firestore & Local Storage
   async update(collection, id, updates) {
-    if (this.isFirebase()) {
-      updates.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
-      await firebaseDB.collection(collection).doc(id).update(updates);
-      return { id, ...updates };
+    const nowIso = new Date().toISOString();
+
+    // Update Local Storage
+    const localData = this._getCollection(collection);
+    const idx = localData.findIndex(d => d.id === id);
+    let updatedDoc = { id, ...updates, updatedAt: nowIso };
+    if (idx !== -1) {
+      updatedDoc = { ...localData[idx], ...updates, updatedAt: nowIso };
+      localData[idx] = updatedDoc;
+      this._saveCollection(collection, localData);
     }
 
-    // Demo mode
-    const data = this._getCollection(collection);
-    const idx = data.findIndex(d => d.id === id);
-    if (idx === -1) return null;
-    data[idx] = { ...data[idx], ...updates, updatedAt: new Date().toISOString() };
-    this._saveCollection(collection, data);
-    return data[idx];
+    // Update Firestore
+    if (this.isFirebase()) {
+      try {
+        const cleanUpdates = this._cleanForFirestore({
+          ...updates,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await firebaseDB.collection(collection).doc(id).set(cleanUpdates, { merge: true });
+        console.log(`🔥 Document updated in Firestore [${collection}/${id}]`);
+      } catch (err) {
+        console.error(`Firestore update error for [${collection}/${id}]:`, err);
+      }
+    }
+
+    return updatedDoc;
   },
 
-  // Delete a document
+  // Delete a document from Firestore & Local Storage
   async remove(collection, id) {
-    if (this.isFirebase()) {
-      await firebaseDB.collection(collection).doc(id).delete();
-      return;
-    }
+    // Remove from Local Storage
+    const localData = this._getCollection(collection).filter(d => d.id !== id);
+    this._saveCollection(collection, localData);
 
-    const data = this._getCollection(collection).filter(d => d.id !== id);
-    this._saveCollection(collection, data);
+    // Remove from Firestore
+    if (this.isFirebase()) {
+      try {
+        await firebaseDB.collection(collection).doc(id).delete();
+        console.log(`🔥 Document deleted from Firestore [${collection}/${id}]`);
+      } catch (err) {
+        console.error(`Firestore delete error for [${collection}/${id}]:`, err);
+      }
+    }
   },
 
-  // Query with filters
+  // Query with filters (Safely evaluated without throwing composite index errors)
   async query(collection, filters = {}) {
-    if (this.isFirebase()) {
-      let query = firebaseDB.collection(collection);
+    // Get all docs from Firestore or cache
+    const all = await this.getAll(collection);
+
+    return all.filter(d => {
+      let match = true;
 
       Object.entries(filters).forEach(([key, value]) => {
         if (value && value !== 'all' && value !== '') {
           if (key === 'dateFrom') {
-            query = query.where('date', '>=', value);
+            const dVal = (d.date || d.dateTime || '').split('T')[0];
+            if (dVal && dVal < value) match = false;
           } else if (key === 'dateTo') {
-            query = query.where('date', '<=', value + 'T23:59:59');
-          } else {
-            query = query.where(key, '==', value);
+            const dVal = (d.date || d.dateTime || '').split('T')[0];
+            if (dVal && dVal > value) match = false;
+          } else if (key === 'urgency') {
+            if (d.urgency !== value) match = false;
+          } else if (key === 'status') {
+            if (d.status !== value) match = false;
+          } else if (key === 'siteName') {
+            if (d.siteName !== value) match = false;
+          } else if (d[key] !== value) {
+            match = false;
           }
         }
       });
 
-      const snapshot = await query.get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    }
-
-    // Demo mode
-    let data = this._getCollection(collection);
-
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== 'all' && value !== '') {
-        data = data.filter(d => {
-          if (key === 'dateFrom') return new Date(d.date || d.dateTime) >= new Date(value);
-          if (key === 'dateTo') return new Date(d.date || d.dateTime) <= new Date(value + 'T23:59:59');
-          return d[key] === value;
-        });
-      }
+      return match;
     });
-
-    return data;
   },
 
   // Count documents
@@ -196,23 +277,57 @@ const SafeSiteDB = {
   },
 
   // ============================================
-  // DEMO DATA SEEDING
+  // INITIAL SEEDING & FIRESTORE SYNC
   // ============================================
 
-  seedIfEmpty() {
-    // Always seed localStorage so demo data is available as fallback
+  async seedIfEmpty() {
+    // 1. Ensure local cache has baseline data
+    if (this._getCollection('sites').length === 0) this._seedSites();
+    if (this._getCollection('dailyReports').length === 0) this._seedDailyReports();
+    if (this._getCollection('safetyIncidents').length === 0) this._seedSafetyIncidents();
+    if (this._getCollection('users').length === 0) this._seedUsers();
 
-    if (this._getCollection('dailyReports').length === 0) {
-      this._seedDailyReports();
-    }
-    if (this._getCollection('safetyIncidents').length === 0) {
-      this._seedSafetyIncidents();
-    }
-    if (this._getCollection('sites').length === 0) {
-      this._seedSites();
-    }
-    if (this._getCollection('users').length === 0) {
-      this._seedUsers();
+    // 2. Synchronize to Firestore if Firestore collections are empty
+    if (this.isFirebase()) {
+      try {
+        const sitesSnap = await firebaseDB.collection('sites').limit(1).get();
+        if (sitesSnap.empty) {
+          console.log('🔄 Syncing initial site data to Firestore...');
+          const sites = this._getCollection('sites');
+          for (const s of sites) {
+            await firebaseDB.collection('sites').doc(s.id).set(this._cleanForFirestore(s), { merge: true });
+          }
+        }
+
+        const reportsSnap = await firebaseDB.collection('dailyReports').limit(1).get();
+        if (reportsSnap.empty) {
+          console.log('🔄 Syncing initial daily reports to Firestore...');
+          const reports = this._getCollection('dailyReports');
+          for (const r of reports) {
+            await firebaseDB.collection('dailyReports').doc(r.id).set(this._cleanForFirestore(r), { merge: true });
+          }
+        }
+
+        const incidentsSnap = await firebaseDB.collection('safetyIncidents').limit(1).get();
+        if (incidentsSnap.empty) {
+          console.log('🔄 Syncing initial safety incidents to Firestore...');
+          const incidents = this._getCollection('safetyIncidents');
+          for (const inc of incidents) {
+            await firebaseDB.collection('safetyIncidents').doc(inc.id).set(this._cleanForFirestore(inc), { merge: true });
+          }
+        }
+
+        const usersSnap = await firebaseDB.collection('users').limit(1).get();
+        if (usersSnap.empty) {
+          console.log('🔄 Syncing user profiles to Firestore...');
+          const users = this._getCollection('users');
+          for (const u of users) {
+            await firebaseDB.collection('users').doc(u.id).set(this._cleanForFirestore(u), { merge: true });
+          }
+        }
+      } catch (err) {
+        console.warn('Firestore initial sync notice:', err);
+      }
     }
   },
 
@@ -336,5 +451,6 @@ const SafeSiteDB = {
   }
 };
 
-// Initialize demo data on first load
+// Initialize seed data and synchronize with Firestore
 SafeSiteDB.seedIfEmpty();
+

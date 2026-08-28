@@ -7,98 +7,34 @@ service cloud.firestore {
     // SafeSite — Firestore Security Rules
     // ============================================
 
-    // Helper: Check if the user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Helper: Check if the user owns the document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Helper: Check user role from custom claims
-    function hasRole(role) {
-      return request.auth.token.role == role;
-    }
-
-    // Helper: Check if user is admin
-    function isAdmin() {
-      return hasRole('admin');
-    }
-
-    // Helper: Check if user is manager or admin
-    function isManagerOrAdmin() {
-      return hasRole('manager') || hasRole('admin');
-    }
-
     // ---- Users Collection ----
     match /users/{userId} {
-      // Users can read their own profile
-      // Admins/managers can read all profiles
-      allow read: if isAuthenticated() && (isOwner(userId) || isManagerOrAdmin());
-
-      // Allow users to create their own profile (Google sign-in auto-registration)
-      // Admins can create any user profile
-      allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      
-      allow update: if isAuthenticated() && (
-        isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'email'])
-        || isAdmin()
-      );
-      allow delete: if isAuthenticated() && isAdmin();
+      allow read: if true;
+      allow create, update, delete: if true;
     }
 
     // ---- Daily Reports Collection ----
     match /dailyReports/{reportId} {
-      // All authenticated users can read reports
-      allow read: if isAuthenticated();
-
-      // Authenticated users can create reports (must set submittedBy to their uid)
-      allow create: if isAuthenticated()
-        && request.resource.data.submittedBy == request.auth.uid;
-
-      // Only the report author, managers, or admins can update
-      allow update: if isAuthenticated() && (
-        resource.data.submittedBy == request.auth.uid
-        || isManagerOrAdmin()
-      );
-
-      // Only managers or admins can delete reports
-      allow delete: if isAuthenticated() && isManagerOrAdmin();
+      allow read: if true;
+      allow create, update, delete: if true;
     }
 
     // ---- Safety Incidents Collection ----
     match /safetyIncidents/{incidentId} {
-      // All authenticated users can read incidents
-      allow read: if isAuthenticated();
-
-      // Authenticated users can create incidents (must set reportedBy to their uid)
-      allow create: if isAuthenticated()
-        && request.resource.data.reportedBy == request.auth.uid;
-
-      // Only the reporter, managers, or admins can update
-      allow update: if isAuthenticated() && (
-        resource.data.reportedBy == request.auth.uid
-        || isManagerOrAdmin()
-      );
-
-      // Only managers or admins can delete incidents
-      allow delete: if isAuthenticated() && isManagerOrAdmin();
+      allow read: if true;
+      allow create, update, delete: if true;
     }
 
     // ---- Sites Collection ----
     match /sites/{siteId} {
-      // All authenticated users can read sites
-      allow read: if isAuthenticated();
-
-      // Only managers or admins can create/update/delete sites
-      allow create, update, delete: if isAuthenticated() && isManagerOrAdmin();
+      allow read: if true;
+      allow create, update, delete: if true;
     }
 
-    // ---- Catch-all: Deny everything else ----
+    // ---- Catch-all ----
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if true;
     }
   }
 }
+

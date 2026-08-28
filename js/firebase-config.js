@@ -11,7 +11,7 @@
 // 🔧 CONFIGURATION — EDIT THESE VALUES
 // ============================================
 
-const DEMO_MODE = false; // Firebase is now configured!
+const DEMO_MODE = false; // Firebase is connected to safesite-93be8!
 
 const firebaseConfig = {
   apiKey: "AIzaSyBrj49ySYF1RBZgpBKZR1oIgDW92d9mWJ8",
@@ -19,8 +19,7 @@ const firebaseConfig = {
   projectId: "safesite-93be8",
   storageBucket: "safesite-93be8.firebasestorage.app",
   messagingSenderId: "213156576491",
-  appId: "1:213156576491:web:26a08f59c35fc5162012ae",
-  measurementId: "G-DBE9B1YRKW"
+  appId: "1:213156576491:web:0ef7a80268a14d5b2012ae"
 };
 
 // ============================================

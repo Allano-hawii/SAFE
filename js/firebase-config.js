@@ -76,28 +76,40 @@ const SafeSiteDB = {
 
   // Add a document to a collection
   async add(collection, doc) {
+    // Always save to localStorage for fallback
+    const localDoc = { ...doc };
+    localDoc.id = localDoc.id || 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    localDoc.createdAt = new Date().toISOString();
+    const data = this._getCollection(collection);
+    data.unshift(localDoc);
+    this._saveCollection(collection, data);
+
     if (this.isFirebase()) {
-      doc.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      const ref = await firebaseDB.collection(collection).add(doc);
-      return { ...doc, id: ref.id };
+      try {
+        doc.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        const ref = await firebaseDB.collection(collection).add(doc);
+        return { ...doc, id: ref.id };
+      } catch (err) {
+        console.warn('Firebase add failed, saved locally:', err);
+      }
     }
 
-    // Demo mode
-    const data = this._getCollection(collection);
-    doc.id = 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-    doc.createdAt = new Date().toISOString();
-    data.unshift(doc);
-    this._saveCollection(collection, data);
-    return doc;
+    return localDoc;
   },
 
   // Get all documents from a collection
   async getAll(collection) {
     if (this.isFirebase()) {
-      const snapshot = await firebaseDB.collection(collection)
-        .orderBy('createdAt', 'desc')
-        .get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      try {
+        const snapshot = await firebaseDB.collection(collection)
+          .orderBy('createdAt', 'desc')
+          .get();
+        const results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (results.length > 0) return results;
+        // Firestore empty — fall through to localStorage
+      } catch (err) {
+        console.warn(`Firebase getAll('${collection}') failed, using localStorage:`, err);
+      }
     }
 
     return this._getCollection(collection);
@@ -189,8 +201,7 @@ const SafeSiteDB = {
   // ============================================
 
   seedIfEmpty() {
-    // Only seed in demo mode
-    if (this.isFirebase()) return;
+    // Always seed localStorage so demo data is available as fallback
 
     if (this._getCollection('dailyReports').length === 0) {
       this._seedDailyReports();

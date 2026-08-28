@@ -10,7 +10,7 @@ const firebaseConfig = {
   projectId: "safesite-93be8",
   storageBucket: "safesite-93be8.firebasestorage.app",
   messagingSenderId: "213156576491",
-  appId: "1:213156576491:web:0ef7a80268a14d5b2012ae"
+  appId: "1:213156576491:web:26a08f59c35fc5162012ae"
 };
 
 // ============================================

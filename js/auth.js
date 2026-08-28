@@ -38,6 +38,7 @@ const Auth = {
     const normalizedEmail = (email || '').trim().toLowerCase();
     const trimmedPassword = (password || '').trim();
 
+    // Try Firebase first if configured
     if (!DEMO_MODE && firebaseAuth) {
       try {
         const credential = await firebaseAuth.signInWithEmailAndPassword(normalizedEmail, trimmedPassword);
@@ -66,17 +67,12 @@ const Auth = {
         localStorage.setItem('safesite_currentUser', JSON.stringify(profile));
         return { success: true, user: profile };
       } catch (err) {
-        console.error('Firebase sign-in error:', err);
-        let errorMsg = 'Invalid email or password.';
-        if (err.code === 'auth/user-not-found') errorMsg = 'No account found with this email.';
-        if (err.code === 'auth/wrong-password') errorMsg = 'Incorrect password.';
-        if (err.code === 'auth/too-many-requests') errorMsg = 'Too many attempts. Please try again later.';
-        if (err.code === 'auth/invalid-email') errorMsg = 'Invalid email format.';
-        return { success: false, error: errorMsg };
+        console.warn('Firebase sign-in failed, falling back to demo users:', err.code);
+        // Fall through to demo user check below
       }
     }
 
-    // Demo mode — case-insensitive email match
+    // Always check demo users as fallback
     const user = this.DEMO_USERS.find(u => u.email === normalizedEmail && u.password === trimmedPassword);
     if (!user) {
       return { success: false, error: 'Invalid email or password.' };

@@ -1,0 +1,8 @@
+{
+  "name": "SafeSite",
+  "description": "Cloud-based construction site log and reporting system for tracking daily reports, safety incidents, and site management in real time.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

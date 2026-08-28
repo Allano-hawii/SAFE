@@ -212,6 +212,18 @@ const SafeSiteDB = {
     if (this._getCollection('sites').length === 0) {
       this._seedSites();
     }
+    if (this._getCollection('users').length === 0) {
+      this._seedUsers();
+    }
+  },
+
+  _seedUsers() {
+    const users = [
+      { id: 'user_demo', email: 'supervisor@safesite.com', name: 'James Ochieng', role: 'supervisor', site: 'Riverside Tower Complex', authProvider: 'demo', createdAt: new Date().toISOString() },
+      { id: 'user_mgr', email: 'manager@safesite.com', name: 'Dr. Allan Msando', role: 'manager', site: 'All Sites', authProvider: 'demo', createdAt: new Date().toISOString() },
+      { id: 'user_admin', email: 'admin@safesite.com', name: 'Admin User', role: 'admin', site: 'All Sites', authProvider: 'demo', createdAt: new Date().toISOString() },
+    ];
+    this._saveCollection('users', users);
   },
 
   _seedSites() {

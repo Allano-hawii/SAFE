@@ -1,0 +1,93 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "SafeSite user account and role information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID" },
+        "email": { "type": "string", "format": "email", "description": "User email address" },
+        "name": { "type": "string", "description": "Full name of user" },
+        "role": { "type": "string", "enum": ["supervisor", "safety_officer", "manager", "admin"], "description": "Role in the organization" },
+        "site": { "type": "string", "description": "Assigned site location" },
+        "authProvider": { "type": "string", "enum": ["email", "google", "demo"], "description": "Authentication method used" },
+        "createdAt": { "type": "string", "description": "Timestamp when user was created" }
+      },
+      "required": ["email", "name", "role"]
+    },
+    "DailyReport": {
+      "title": "DailyReport",
+      "description": "Daily site log recording work, materials, labor, and equipment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique report ID" },
+        "date": { "type": "string", "description": "Log date (YYYY-MM-DD)" },
+        "siteName": { "type": "string", "description": "Site name" },
+        "weather": { "type": "string", "description": "Weather conditions" },
+        "workCompleted": { "type": "string", "description": "Summary of work done" },
+        "materialsUsed": { "type": "array", "description": "List of materials consumed" },
+        "laborSkilled": { "type": "number", "description": "Count of skilled laborers" },
+        "laborUnskilled": { "type": "number", "description": "Count of unskilled laborers" },
+        "completionPct": { "type": "number", "description": "Estimated completion percentage" },
+        "equipmentStatus": { "type": "string", "description": "Equipment status" },
+        "notes": { "type": "string", "description": "Additional supervisor notes" },
+        "submittedBy": { "type": "string", "description": "User ID of author" },
+        "submittedByName": { "type": "string", "description": "Name of author" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["date", "siteName", "submittedBy"]
+    },
+    "SafetyIncident": {
+      "title": "SafetyIncident",
+      "description": "Safety incident or hazard report",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique incident ID" },
+        "dateTime": { "type": "string", "description": "Date and time of incident" },
+        "siteName": { "type": "string", "description": "Site name" },
+        "locationOnSite": { "type": "string", "description": "Specific location on site" },
+        "incidentType": { "type": "string", "description": "Type of incident" },
+        "urgency": { "type": "string", "enum": ["Low", "Medium", "High"], "description": "Urgency rating" },
+        "description": { "type": "string", "description": "Detailed description" },
+        "injuriesReported": { "type": "boolean", "description": "Whether injuries occurred" },
+        "injuryDetails": { "type": "string", "description": "Injury details if applicable" },
+        "actionTaken": { "type": "string", "description": "Corrective action taken" },
+        "status": { "type": "string", "enum": ["Open", "Under Review", "Resolved"], "description": "Incident resolution status" },
+        "reportedBy": { "type": "string", "description": "User ID who reported" },
+        "reportedByName": { "type": "string", "description": "Name of reporter" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["dateTime", "siteName", "incidentType", "urgency", "reportedBy"]
+    },
+    "Site": {
+      "title": "Site",
+      "description": "Construction project site",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique site ID" },
+        "name": { "type": "string", "description": "Site name" },
+        "location": { "type": "string", "description": "Location description" },
+        "status": { "type": "string", "enum": ["Active", "On Hold", "Completed"], "description": "Site status" }
+      },
+      "required": ["name", "location"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User account profiles"
+    },
+    "/dailyReports/{reportId}": {
+      "schema": "DailyReport",
+      "description": "Daily construction reports"
+    },
+    "/safetyIncidents/{incidentId}": {
+      "schema": "SafetyIncident",
+      "description": "Safety incident and hazard logs"
+    },
+    "/sites/{siteId}": {
+      "schema": "Site",
+      "description": "Construction project locations"
+    }
+  }
+}

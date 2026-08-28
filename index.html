@@ -41,75 +41,182 @@
       </div>
     </div>
 
-    <!-- RIGHT: Login Form -->
+    <!-- RIGHT: Login & Sign Up Form -->
     <div class="login-form-panel">
-      <div class="login-form-header">
-        <h2>Welcome Back</h2>
-        <p>Sign in to access your construction site reports.</p>
-      </div>
-
-      <form id="login-form" novalidate>
-        <div class="form-group">
-          <label for="login-email">Email Address</label>
-          <input type="email" id="login-email" class="form-control" placeholder="supervisor@safesite.com" autocomplete="email" required>
-          <div class="form-error" id="email-error">Please enter a valid email address.</div>
-        </div>
-
-        <div class="form-group">
-          <label for="login-password">Password</label>
-          <input type="password" id="login-password" class="form-control" placeholder="Enter your password" autocomplete="current-password" required>
-          <div class="form-error" id="password-error">Password is required.</div>
-        </div>
-
-        <button type="submit" id="login-btn" class="btn btn-primary btn-block btn-lg" style="margin-top: 0.5rem;">
-          <span class="spinner"></span>
+      <!-- Auth Mode Switcher Tabs -->
+      <div class="auth-nav-tabs" role="tablist">
+        <button type="button" class="auth-nav-tab active" id="tab-btn-signin" role="tab" aria-selected="true" aria-controls="panel-signin">
           Sign In
         </button>
+        <button type="button" class="auth-nav-tab" id="tab-btn-signup" role="tab" aria-selected="false" aria-controls="panel-signup">
+          Create Account
+        </button>
+      </div>
 
-        <div style="text-align: center; margin: 0.75rem 0; color: var(--text-muted); font-size: 0.85rem;">
-          — or —
+      <!-- ================= SIGN IN PANEL ================= -->
+      <div id="panel-signin">
+        <div class="login-form-header">
+          <h2>Welcome Back</h2>
+          <p>Sign in to access your construction site reports.</p>
         </div>
 
-        <button type="button" id="demo-btn" class="btn btn-block" style="
-          padding: 0.75rem 1.25rem; border: 2px dashed var(--accent-orange, #f59e0b);
-          background: transparent; color: var(--accent-orange, #f59e0b);
-          border-radius: 8px; font-size: 0.95rem; font-weight: 600;
-          cursor: pointer; transition: all 0.2s ease;
-        " onmouseover="this.style.background='var(--accent-orange, #f59e0b)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--accent-orange, #f59e0b)'">
-          🔓 Quick Demo Login (Supervisor)
-        </button>
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label for="login-email">Email Address</label>
+            <input type="email" id="login-email" class="form-control" placeholder="supervisor@safesite.com" autocomplete="email" required>
+            <div class="form-error" id="email-error">Please enter a valid email address.</div>
+          </div>
 
-        <div style="text-align: center; margin: 0.75rem 0; color: var(--text-muted); font-size: 0.85rem;">
-          — or —
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" class="form-control" placeholder="Enter your password" autocomplete="current-password" required>
+            <div class="form-error" id="password-error">Password is required.</div>
+          </div>
+
+          <button type="submit" id="login-btn" class="btn btn-primary btn-block btn-lg" style="margin-top: 0.5rem;">
+            <span class="spinner"></span>
+            Sign In
+          </button>
+
+          <div style="text-align: center; margin: 0.75rem 0; color: var(--text-muted); font-size: 0.85rem;">
+            — or —
+          </div>
+
+          <button type="button" id="demo-btn" class="btn btn-block" style="
+            padding: 0.75rem 1.25rem; border: 2px dashed var(--accent-orange, #f59e0b);
+            background: transparent; color: var(--accent-orange, #f59e0b);
+            border-radius: 8px; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease;
+          " onmouseover="this.style.background='var(--accent-orange, #f59e0b)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--accent-orange, #f59e0b)'">
+            🔓 Quick Demo Login (Supervisor)
+          </button>
+
+          <div style="text-align: center; margin: 0.75rem 0; color: var(--text-muted); font-size: 0.85rem;">
+            — or —
+          </div>
+
+          <button type="button" id="google-btn" class="btn btn-block" style="
+            display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+            padding: 0.75rem 1.25rem; border: 1px solid var(--border-subtle);
+            background: var(--bg-card, #fff); color: var(--text-primary, #333);
+            border-radius: 8px; font-size: 0.95rem; font-weight: 500;
+            cursor: pointer; transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+          " onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.08)'">
+            <svg width="20" height="20" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            Continue with Google
+          </button>
+
+          <div class="form-error" id="google-error" style="text-align: center; margin-top: 0.75rem;"></div>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.25rem; font-size: 0.9rem; color: var(--text-secondary);">
+          Don't have an account? <button type="button" class="auth-switch-link" id="link-go-signup">Create one now</button>
         </div>
 
-        <button type="button" id="google-btn" class="btn btn-block" style="
-          display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-          padding: 0.75rem 1.25rem; border: 1px solid var(--border-subtle);
-          background: var(--bg-card, #fff); color: var(--text-primary, #333);
-          border-radius: 8px; font-size: 0.95rem; font-weight: 500;
-          cursor: pointer; transition: all 0.2s ease;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        " onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.08)'">
-          <svg width="20" height="20" viewBox="0 0 48 48">
-            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-          </svg>
-          Continue with Google
-        </button>
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+          <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; line-height: 1.6;">
+            <strong style="color: var(--text-secondary);">Demo Credentials</strong><br>
+            Supervisor: <code style="color: var(--accent-orange);">supervisor@safesite.com</code><br>
+            Manager: <code style="color: var(--accent-orange);">manager@safesite.com</code><br>
+            Password: <code style="color: var(--accent-orange);">demo123</code>
+          </p>
+        </div>
+      </div>
 
-        <div class="form-error" id="google-error" style="text-align: center; margin-top: 0.75rem;"></div>
-      </form>
+      <!-- ================= SIGN UP PANEL ================= -->
+      <div id="panel-signup" style="display: none;">
+        <div class="login-form-header">
+          <h2>Create New Account</h2>
+          <p>Register as a site supervisor, manager, or safety officer.</p>
+        </div>
 
-      <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle);">
-        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; line-height: 1.6;">
-          <strong style="color: var(--text-secondary);">Demo Credentials</strong><br>
-          Supervisor: <code style="color: var(--accent-orange);">supervisor@safesite.com</code><br>
-          Manager: <code style="color: var(--accent-orange);">manager@safesite.com</code><br>
-          Password: <code style="color: var(--accent-orange);">demo123</code>
-        </p>
+        <form id="signup-form" novalidate>
+          <div class="form-group">
+            <label for="signup-name">Full Name <span class="required">*</span></label>
+            <input type="text" id="signup-name" class="form-control" placeholder="e.g., Sarah Jenkins" autocomplete="name" required>
+            <div class="form-error" id="signup-name-error">Please enter your full name.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="signup-email">Email Address <span class="required">*</span></label>
+            <input type="email" id="signup-email" class="form-control" placeholder="e.g., s.jenkins@safesite.com" autocomplete="email" required>
+            <div class="form-error" id="signup-email-error">Please enter a valid email address.</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="signup-role">Role <span class="required">*</span></label>
+              <select id="signup-role" class="form-control" required>
+                <option value="supervisor" selected>Site Supervisor</option>
+                <option value="safety_officer">Safety Officer</option>
+                <option value="manager">Project Manager</option>
+                <option value="engineer">Site Engineer</option>
+                <option value="admin">Administrator</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="signup-site">Assigned Site <span class="required">*</span></label>
+              <select id="signup-site" class="form-control" required>
+                <option value="Riverside Tower Complex">Riverside Tower</option>
+                <option value="Westlands Mall Extension">Westlands Mall</option>
+                <option value="Industrial Park Phase 2">Industrial Park</option>
+                <option value="Greenfield Apartments">Greenfield Apts</option>
+                <option value="All Sites" selected>All Sites</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="signup-password">Password <span class="required">*</span></label>
+            <input type="password" id="signup-password" class="form-control" placeholder="Minimum 6 characters" autocomplete="new-password" required>
+            <div class="form-error" id="signup-password-error">Password must be at least 6 characters.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="signup-confirm-password">Confirm Password <span class="required">*</span></label>
+            <input type="password" id="signup-confirm-password" class="form-control" placeholder="Re-enter your password" autocomplete="new-password" required>
+            <div class="form-error" id="signup-confirm-error">Passwords do not match.</div>
+          </div>
+
+          <button type="submit" id="signup-btn" class="btn btn-primary btn-block btn-lg" style="margin-top: 0.5rem;">
+            <span class="spinner"></span>
+            Register Account
+          </button>
+
+          <div style="text-align: center; margin: 0.75rem 0; color: var(--text-muted); font-size: 0.85rem;">
+            — or —
+          </div>
+
+          <button type="button" id="signup-google-btn" class="btn btn-block" style="
+            display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+            padding: 0.75rem 1.25rem; border: 1px solid var(--border-subtle);
+            background: var(--bg-card, #fff); color: var(--text-primary, #333);
+            border-radius: 8px; font-size: 0.95rem; font-weight: 500;
+            cursor: pointer; transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+          " onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.08)'">
+            <svg width="20" height="20" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            Continue with Google
+          </button>
+
+          <div class="form-error" id="signup-general-error" style="text-align: center; margin-top: 0.75rem;"></div>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.25rem; font-size: 0.9rem; color: var(--text-secondary);">
+          Already have an account? <button type="button" class="auth-switch-link" id="link-go-signin">Sign In</button>
+        </div>
       </div>
     </div>
   </div>
@@ -127,27 +234,76 @@
       window.location.href = 'dashboard.html';
     }
 
+    // Tab Switching
+    const tabBtnSignIn = document.getElementById('tab-btn-signin');
+    const tabBtnSignUp = document.getElementById('tab-btn-signup');
+    const panelSignIn = document.getElementById('panel-signin');
+    const panelSignUp = document.getElementById('panel-signup');
+    const linkGoSignUp = document.getElementById('link-go-signup');
+    const linkGoSignIn = document.getElementById('link-go-signin');
+
+    function showTab(tab) {
+      clearAllErrors();
+      if (tab === 'signup') {
+        tabBtnSignUp.classList.add('active');
+        tabBtnSignUp.setAttribute('aria-selected', 'true');
+        tabBtnSignIn.classList.remove('active');
+        tabBtnSignIn.setAttribute('aria-selected', 'false');
+        panelSignUp.style.display = 'block';
+        panelSignIn.style.display = 'none';
+        document.getElementById('signup-name').focus();
+      } else {
+        tabBtnSignIn.classList.add('active');
+        tabBtnSignIn.setAttribute('aria-selected', 'true');
+        tabBtnSignUp.classList.remove('active');
+        tabBtnSignUp.setAttribute('aria-selected', 'false');
+        panelSignIn.style.display = 'block';
+        panelSignUp.style.display = 'none';
+        document.getElementById('login-email').focus();
+      }
+    }
+
+    tabBtnSignIn.addEventListener('click', () => showTab('signin'));
+    tabBtnSignUp.addEventListener('click', () => showTab('signup'));
+    linkGoSignUp.addEventListener('click', () => showTab('signup'));
+    linkGoSignIn.addEventListener('click', () => showTab('signin'));
+
+    // Sign In Elements
     const loginForm = document.getElementById('login-form');
     const emailInput = document.getElementById('login-email');
     const passwordInput = document.getElementById('login-password');
     const loginBtn = document.getElementById('login-btn');
+    const demoBtn = document.getElementById('demo-btn');
     const googleBtn = document.getElementById('google-btn');
     const emailError = document.getElementById('email-error');
     const passwordError = document.getElementById('password-error');
     const googleError = document.getElementById('google-error');
 
-    function clearErrors() {
-      emailError.classList.remove('visible');
-      passwordError.classList.remove('visible');
-      googleError.classList.remove('visible');
-      emailInput.classList.remove('error');
-      passwordInput.classList.remove('error');
+    // Sign Up Elements
+    const signupForm = document.getElementById('signup-form');
+    const signupName = document.getElementById('signup-name');
+    const signupEmail = document.getElementById('signup-email');
+    const signupRole = document.getElementById('signup-role');
+    const signupSite = document.getElementById('signup-site');
+    const signupPassword = document.getElementById('signup-password');
+    const signupConfirm = document.getElementById('signup-confirm-password');
+    const signupBtn = document.getElementById('signup-btn');
+    const signupGoogleBtn = document.getElementById('signup-google-btn');
+    const signupNameError = document.getElementById('signup-name-error');
+    const signupEmailError = document.getElementById('signup-email-error');
+    const signupPasswordError = document.getElementById('signup-password-error');
+    const signupConfirmError = document.getElementById('signup-confirm-error');
+    const signupGeneralError = document.getElementById('signup-general-error');
+
+    function clearAllErrors() {
+      document.querySelectorAll('.form-error').forEach(el => el.classList.remove('visible'));
+      document.querySelectorAll('.form-control').forEach(el => el.classList.remove('error'));
     }
 
     // Email/Password login
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      clearErrors();
+      clearAllErrors();
 
       let valid = true;
       const email = emailInput.value.trim();
@@ -169,7 +325,6 @@
 
       loginBtn.classList.add('loading');
 
-      // Try Firebase first if configured (with 5s timeout)
       try {
         const result = await Auth.signIn(email, password);
         loginBtn.classList.remove('loading');
@@ -183,24 +338,76 @@
         }
       } catch (err) {
         loginBtn.classList.remove('loading');
-        // Last resort: try direct demo login
-        const demoUser = Auth.DEMO_USERS.find(u => u.email === email.trim().toLowerCase() && u.password === password.trim());
-        if (demoUser) {
-          const sessionUser = { ...demoUser };
-          delete sessionUser.password;
-          localStorage.setItem('safesite_currentUser', JSON.stringify(sessionUser));
+        emailError.textContent = 'An error occurred. Please try again or use Demo Login.';
+        emailError.classList.add('visible');
+      }
+    });
+
+    // Sign Up Form Submission
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearAllErrors();
+
+      let valid = true;
+      const name = signupName.value.trim();
+      const email = signupEmail.value.trim();
+      const role = signupRole.value;
+      const site = signupSite.value;
+      const password = signupPassword.value;
+      const confirmPassword = signupConfirm.value;
+
+      if (!name || name.length < 2) {
+        signupNameError.textContent = 'Please enter your full name.';
+        signupNameError.classList.add('visible');
+        signupName.classList.add('error');
+        valid = false;
+      }
+
+      if (!email || !email.includes('@') || !email.includes('.')) {
+        signupEmailError.textContent = 'Please enter a valid email address.';
+        signupEmailError.classList.add('visible');
+        signupEmail.classList.add('error');
+        valid = false;
+      }
+
+      if (!password || password.length < 6) {
+        signupPasswordError.textContent = 'Password must be at least 6 characters.';
+        signupPasswordError.classList.add('visible');
+        signupPassword.classList.add('error');
+        valid = false;
+      }
+
+      if (password !== confirmPassword) {
+        signupConfirmError.textContent = 'Passwords do not match.';
+        signupConfirmError.classList.add('visible');
+        signupConfirm.classList.add('error');
+        valid = false;
+      }
+
+      if (!valid) return;
+
+      signupBtn.classList.add('loading');
+
+      try {
+        const result = await Auth.register(email, password, name, role, site);
+        signupBtn.classList.remove('loading');
+
+        if (result.success) {
           window.location.href = 'dashboard.html';
         } else {
-          emailError.textContent = 'An error occurred. Please try again or use Demo Login.';
-          emailError.classList.add('visible');
+          signupGeneralError.textContent = result.error || 'Registration failed. Please try again.';
+          signupGeneralError.classList.add('visible');
         }
+      } catch (err) {
+        signupBtn.classList.remove('loading');
+        signupGeneralError.textContent = 'An unexpected error occurred. Please try again.';
+        signupGeneralError.classList.add('visible');
       }
     });
 
     // Demo login button
-    const demoBtn = document.getElementById('demo-btn');
     demoBtn.addEventListener('click', async () => {
-      clearErrors();
+      clearAllErrors();
       demoBtn.style.opacity = '0.6';
       demoBtn.textContent = 'Signing in...';
       try {
@@ -214,39 +421,42 @@
           demoBtn.textContent = '🔓 Quick Demo Login (Supervisor)';
         }
       } catch (err) {
-        // Direct fallback — bypass everything
         const demoUser = { id: 'user_demo', email: 'supervisor@safesite.com', name: 'James Ochieng', role: 'supervisor', site: 'Riverside Tower Complex' };
         localStorage.setItem('safesite_currentUser', JSON.stringify(demoUser));
         window.location.href = 'dashboard.html';
       }
     });
 
-    // Google Sign-In
-    googleBtn.addEventListener('click', async () => {
-      clearErrors();
-      googleBtn.style.opacity = '0.6';
-      googleBtn.style.pointerEvents = 'none';
-      googleBtn.textContent = 'Signing in...';
+    // Google Sign-In helper for both sign in and sign up
+    async function handleGoogleSignIn(buttonEl, errorEl) {
+      clearAllErrors();
+      const originalHTML = buttonEl.innerHTML;
+      buttonEl.style.opacity = '0.6';
+      buttonEl.style.pointerEvents = 'none';
+      buttonEl.textContent = 'Connecting with Google...';
 
       try {
         const result = await Auth.signInWithGoogle();
         if (result.success) {
           window.location.href = 'dashboard.html';
         } else {
-          googleError.textContent = result.error;
-          googleError.classList.add('visible');
-          googleBtn.style.opacity = '1';
-          googleBtn.style.pointerEvents = 'auto';
-          googleBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continue with Google`;
+          errorEl.textContent = result.error;
+          errorEl.classList.add('visible');
+          buttonEl.style.opacity = '1';
+          buttonEl.style.pointerEvents = 'auto';
+          buttonEl.innerHTML = originalHTML;
         }
       } catch (err) {
-        googleError.textContent = 'An error occurred. Please try again.';
-        googleError.classList.add('visible');
-        googleBtn.style.opacity = '1';
-        googleBtn.style.pointerEvents = 'auto';
-        googleBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continue with Google`;
+        errorEl.textContent = 'Google sign-in error. Please try again.';
+        errorEl.classList.add('visible');
+        buttonEl.style.opacity = '1';
+        buttonEl.style.pointerEvents = 'auto';
+        buttonEl.innerHTML = originalHTML;
       }
-    });
+    }
+
+    googleBtn.addEventListener('click', () => handleGoogleSignIn(googleBtn, googleError));
+    signupGoogleBtn.addEventListener('click', () => handleGoogleSignIn(signupGoogleBtn, signupGeneralError));
   </script>
 </body>
 </html>

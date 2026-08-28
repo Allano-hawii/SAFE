@@ -33,6 +33,32 @@ const Auth = {
     return null;
   },
 
+  // Get local registered accounts fallback
+  getLocalAccounts() {
+    try {
+      const raw = localStorage.getItem('safesite_registered_accounts');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  // Save local registered account
+  saveLocalAccount(account) {
+    try {
+      const accounts = this.getLocalAccounts();
+      const existingIdx = accounts.findIndex(a => a.email === account.email);
+      if (existingIdx >= 0) {
+        accounts[existingIdx] = account;
+      } else {
+        accounts.unshift(account);
+      }
+      localStorage.setItem('safesite_registered_accounts', JSON.stringify(accounts));
+    } catch (e) {
+      console.warn('Could not save local account:', e);
+    }
+  },
+
   // Sign in with email/password
   async signIn(email, password) {
     const normalizedEmail = (email || '').trim().toLowerCase();
@@ -69,16 +95,24 @@ const Auth = {
         localStorage.setItem('safesite_currentUser', JSON.stringify(profile));
         return { success: true, user: profile };
       } catch (err) {
-        console.warn('Firebase sign-in failed, falling back to demo users:', err.code);
+        console.warn('Firebase sign-in failed, falling back to demo/local users:', err.code);
         // Fall through to demo user check below
       }
     }
 
-    // Always check demo users as fallback
-    const user = this.DEMO_USERS.find(u => u.email === normalizedEmail && u.password === trimmedPassword);
+    // Check demo users
+    let user = this.DEMO_USERS.find(u => u.email === normalizedEmail && u.password === trimmedPassword);
+    
+    // Check locally registered accounts
+    if (!user) {
+      const localAccs = this.getLocalAccounts();
+      user = localAccs.find(u => u.email === normalizedEmail && u.password === trimmedPassword);
+    }
+
     if (!user) {
       return { success: false, error: 'Invalid email or password.' };
     }
+
     const sessionUser = { ...user };
     delete sessionUser.password;
     localStorage.setItem('safesite_currentUser', JSON.stringify(sessionUser));
@@ -103,9 +137,10 @@ const Auth = {
       return { success: false, error: 'Password must be at least 6 characters.' };
     }
 
-    // Check if demo user already exists
-    const existing = this.DEMO_USERS.find(u => u.email === normalizedEmail);
-    if (existing) {
+    // Check if demo user or local user already exists
+    const existingDemo = this.DEMO_USERS.find(u => u.email === normalizedEmail);
+    const existingLocal = this.getLocalAccounts().find(u => u.email === normalizedEmail);
+    if (existingDemo || existingLocal) {
       return { success: false, error: 'An account with this email already exists.' };
     }
 
@@ -121,26 +156,46 @@ const Auth = {
           email: normalizedEmail,
           name: trimmedName,
           role: role,
-          site: site
+          site: site,
+          authProvider: 'email',
+          createdAt: new Date().toISOString()
         };
 
-        // Save to Firestore
+        // Save to Firestore users collection
         if (firebaseDB) {
           try {
             await firebaseDB.collection('users').doc(user.uid).set({
               ...profile,
-              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-              authProvider: 'email'
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+            console.log('✅ User registered and saved to Firestore database:', user.uid);
           } catch (e) {
             console.warn('Could not save user profile to Firestore:', e);
           }
         }
 
+        // Also save to local collection for seamless offline & sync
+        this.saveLocalAccount({
+          id: user.uid,
+          email: normalizedEmail,
+          password: trimmedPassword,
+          name: trimmedName,
+          role: role,
+          site: site,
+          authProvider: 'email'
+        });
+
+        // Add to SafeSiteDB users collection
+        if (typeof SafeSiteDB !== 'undefined' && SafeSiteDB._getCollection) {
+          const dbUsers = SafeSiteDB._getCollection('users');
+          dbUsers.unshift(profile);
+          SafeSiteDB._saveCollection('users', dbUsers);
+        }
+
         localStorage.setItem('safesite_currentUser', JSON.stringify(profile));
         return { success: true, user: profile };
       } catch (err) {
-        console.warn('Firebase registration failed:', err.code);
+        console.warn('Firebase registration failed:', err.code, err.message);
         let errorMsg = 'Registration failed. Please try again.';
         if (err.code === 'auth/email-already-in-use') errorMsg = 'An account with this email already exists.';
         if (err.code === 'auth/weak-password') errorMsg = 'Password is too weak. Use at least 6 characters.';
@@ -149,16 +204,29 @@ const Auth = {
       }
     }
 
-    // Demo mode — add to local users
+    // Demo mode / offline registration
     const newUser = {
-      id: 'user_' + Date.now(),
+      id: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
       email: normalizedEmail,
       password: trimmedPassword,
       name: trimmedName,
       role: role,
-      site: site
+      site: site,
+      authProvider: 'email',
+      createdAt: new Date().toISOString()
     };
+    
     this.DEMO_USERS.push(newUser);
+    this.saveLocalAccount(newUser);
+
+    // Also update SafeSiteDB users collection
+    if (typeof SafeSiteDB !== 'undefined' && SafeSiteDB._getCollection) {
+      const dbUsers = SafeSiteDB._getCollection('users');
+      const profileToSave = { ...newUser };
+      delete profileToSave.password;
+      dbUsers.unshift(profileToSave);
+      SafeSiteDB._saveCollection('users', dbUsers);
+    }
 
     const sessionUser = { ...newUser };
     delete sessionUser.password;

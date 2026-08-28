@@ -1,0 +1,15 @@
+{
+  "name": "safesite",
+  "version": "1.0.0",
+  "description": "SafeSite — Cloud-based construction log and reporting system",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "echo 'No build step required'"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

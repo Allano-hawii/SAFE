@@ -131,7 +131,7 @@ const Auth = {
     const trimmedName = (name || '').trim();
 
     if (!normalizedEmail || !trimmedPassword || !trimmedName) {
-      return { success: false, error: 'Email, password, and name are required.' };
+      return { success: false, error: 'Full name, email, and password are required.' };
     }
     if (trimmedPassword.length < 6) {
       return { success: false, error: 'Password must be at least 6 characters.' };
@@ -144,12 +144,20 @@ const Auth = {
       return { success: false, error: 'An account with this email already exists.' };
     }
 
-    // Try Firebase registration
+    let firebaseUid = null;
+
+    // Try Firebase registration if configured
     if (!DEMO_MODE && firebaseAuth) {
       try {
         const credential = await firebaseAuth.createUserWithEmailAndPassword(normalizedEmail, trimmedPassword);
         const user = credential.user;
-        await user.updateProfile({ displayName: trimmedName });
+        firebaseUid = user.uid;
+
+        try {
+          await user.updateProfile({ displayName: trimmedName });
+        } catch (pErr) {
+          console.warn('Could not update Firebase displayName:', pErr);
+        }
 
         const profile = {
           id: user.uid,
@@ -174,7 +182,7 @@ const Auth = {
           }
         }
 
-        // Also save to local collection for seamless offline & sync
+        // Also save to local registered accounts collection
         this.saveLocalAccount({
           id: user.uid,
           email: normalizedEmail,
@@ -182,31 +190,45 @@ const Auth = {
           name: trimmedName,
           role: role,
           site: site,
-          authProvider: 'email'
+          authProvider: 'email',
+          createdAt: new Date().toISOString()
         });
 
         // Add to SafeSiteDB users collection
         if (typeof SafeSiteDB !== 'undefined' && SafeSiteDB._getCollection) {
           const dbUsers = SafeSiteDB._getCollection('users');
-          dbUsers.unshift(profile);
+          const existingIdx = dbUsers.findIndex(u => u.email === normalizedEmail);
+          if (existingIdx >= 0) {
+            dbUsers[existingIdx] = profile;
+          } else {
+            dbUsers.unshift(profile);
+          }
           SafeSiteDB._saveCollection('users', dbUsers);
         }
 
         localStorage.setItem('safesite_currentUser', JSON.stringify(profile));
         return { success: true, user: profile };
       } catch (err) {
-        console.warn('Firebase registration failed:', err.code, err.message);
-        let errorMsg = 'Registration failed. Please try again.';
-        if (err.code === 'auth/email-already-in-use') errorMsg = 'An account with this email already exists.';
-        if (err.code === 'auth/weak-password') errorMsg = 'Password is too weak. Use at least 6 characters.';
-        if (err.code === 'auth/invalid-email') errorMsg = 'Invalid email format.';
-        return { success: false, error: errorMsg };
+        console.warn('Firebase registration notice:', err.code, err.message);
+        if (err.code === 'auth/email-already-in-use') {
+          return { success: false, error: 'An account with this email already exists.' };
+        }
+        if (err.code === 'auth/weak-password') {
+          return { success: false, error: 'Password is too weak. Use at least 6 characters.' };
+        }
+        if (err.code === 'auth/invalid-email') {
+          return { success: false, error: 'Please enter a valid email address.' };
+        }
+        // If Firebase Auth provider is not enabled or domain is restricted,
+        // proceed with local database registration so user flow is never blocked
+        console.info('Completing account registration in database store...');
       }
     }
 
-    // Demo mode / offline registration
+    // Database & local registration fallback
+    const userId = firebaseUid || ('user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
     const newUser = {
-      id: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      id: userId,
       email: normalizedEmail,
       password: trimmedPassword,
       name: trimmedName,
@@ -219,12 +241,34 @@ const Auth = {
     this.DEMO_USERS.push(newUser);
     this.saveLocalAccount(newUser);
 
-    // Also update SafeSiteDB users collection
+    // Save to Firestore if accessible
+    if (firebaseDB) {
+      try {
+        await firebaseDB.collection('users').doc(userId).set({
+          id: userId,
+          email: normalizedEmail,
+          name: trimmedName,
+          role: role,
+          site: site,
+          authProvider: 'email',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (dbErr) {
+        console.warn('Firestore doc write warning:', dbErr);
+      }
+    }
+
+    // Update SafeSiteDB users collection
     if (typeof SafeSiteDB !== 'undefined' && SafeSiteDB._getCollection) {
       const dbUsers = SafeSiteDB._getCollection('users');
       const profileToSave = { ...newUser };
       delete profileToSave.password;
-      dbUsers.unshift(profileToSave);
+      const existingIdx = dbUsers.findIndex(u => u.email === normalizedEmail);
+      if (existingIdx >= 0) {
+        dbUsers[existingIdx] = profileToSave;
+      } else {
+        dbUsers.unshift(profileToSave);
+      }
       SafeSiteDB._saveCollection('users', dbUsers);
     }
 

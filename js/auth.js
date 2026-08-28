@@ -35,9 +35,12 @@ const Auth = {
 
   // Sign in with email/password
   async signIn(email, password) {
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const trimmedPassword = (password || '').trim();
+
     if (!DEMO_MODE && firebaseAuth) {
       try {
-        const credential = await firebaseAuth.signInWithEmailAndPassword(email, password);
+        const credential = await firebaseAuth.signInWithEmailAndPassword(normalizedEmail, trimmedPassword);
         const user = credential.user;
 
         // Try to get user profile from Firestore
@@ -73,8 +76,8 @@ const Auth = {
       }
     }
 
-    // Demo mode
-    const user = this.DEMO_USERS.find(u => u.email === email && u.password === password);
+    // Demo mode — case-insensitive email match
+    const user = this.DEMO_USERS.find(u => u.email === normalizedEmail && u.password === trimmedPassword);
     if (!user) {
       return { success: false, error: 'Invalid email or password.' };
     }
